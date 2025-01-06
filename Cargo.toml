@@ -3,4 +3,9 @@ name = "drawme"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+serde = ["dep:serde", "nalgebra/serde-serialize"]
+
 [dependencies]
+nalgebra = { version = "0.33", default-features = false }
+serde = { version = "1.0", features = ["derive"], optional = true }
