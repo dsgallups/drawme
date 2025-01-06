@@ -1,14 +1,27 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+#![doc = r#"
+Draw anything, to anything
 
-#[cfg(test)]
-mod tests {
-    use super::*;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+# Overview
+`drawme` contains interfaces and types that enable developers to draw their types to
+static, two-dimensional [`Canvas`]es.
+
+Much of the design relies on SVG's specification, meaning that
+it is up to the [`Canvas`] on how to handle the units.
+
+If you want to scale, contract, clip, etc. the drawing does not care.
+
+
+## TODO
+unit will always be f64,
+it is up to the canvas on how to scale accordingly,
+to define a bounding box, etc.
+
+Drawings can calculate their total size
+"#]
+
+pub mod shapes;
+
+pub mod prelude {
+    pub use crate::shapes::*;
 }
