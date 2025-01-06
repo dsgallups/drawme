@@ -24,3 +24,9 @@ impl<'a> Fill<'a> {
         self.0.into_owned()
     }
 }
+
+impl<C: Canvas + ?Sized> Draw<C> for Fill<'_> {
+    fn draw(&self, canvas: &mut C) {
+        canvas.set_fill(self.paint());
+    }
+}

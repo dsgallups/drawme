@@ -24,3 +24,9 @@ impl<'a> StrokeColor<'a> {
         self.0.into_owned()
     }
 }
+
+impl<C: Canvas + ?Sized> Draw<C> for StrokeColor<'_> {
+    fn draw(&self, canvas: &mut C) {
+        canvas.set_stroke_color(self.paint());
+    }
+}

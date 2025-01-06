@@ -36,6 +36,8 @@ pub mod style;
 pub mod text;
 
 pub mod prelude {
+    #[cfg(feature = "svg")]
+    pub use crate::canvas::svg::*;
     pub use crate::canvas::*;
     pub use crate::color::{defaults::*, *};
     pub use crate::drawable::*;
