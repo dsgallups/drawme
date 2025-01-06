@@ -4,9 +4,10 @@ version = "0.0.0"
 edition = "2021"
 
 [features]
-serde = ["dep:serde", "nalgebra/serde-serialize"]
+serde = ["dep:serde", "nalgebra/serde-serialize", "url/serde"]
 
 [dependencies]
 nalgebra = { version = "0.33", default-features = false, features = ["std"] }
 #nalgebra = { version = "0.33", default-features = false }
 serde = { version = "1.0", features = ["derive"], optional = true }
+url = "2.5.4"

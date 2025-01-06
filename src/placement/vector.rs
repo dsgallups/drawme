@@ -2,7 +2,7 @@ use nalgebra::Vector2;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, PartialEq, Copy, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Vector(Vector2<f64>);
 impl Vector {

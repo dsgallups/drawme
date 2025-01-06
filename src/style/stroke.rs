@@ -2,9 +2,9 @@ use std::borrow::Cow;
 
 use crate::prelude::*;
 
-pub struct Fill<'a>(Cow<'a, Paint>);
+pub struct StrokeColor<'a>(Cow<'a, Paint>);
 
-impl<'a> Fill<'a> {
+impl<'a> StrokeColor<'a> {
     pub fn new(paint: impl Into<Cow<'a, Paint>>) -> Self {
         Self(paint.into())
     }
