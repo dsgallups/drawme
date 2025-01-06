@@ -21,3 +21,5 @@ pub use rgb::*;
 
 mod rgba;
 pub use rgba::*;
+
+pub mod defaults;

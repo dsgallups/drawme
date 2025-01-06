@@ -21,11 +21,15 @@ Drawings can calculate their total size
 "#]
 
 pub mod color;
+#[macro_use]
+mod macros;
 pub mod placement;
 pub mod shapes;
+pub mod style;
 
 pub mod prelude {
-    pub use crate::color::*;
+    pub use crate::color::{defaults::*, *};
     pub use crate::placement::*;
     pub use crate::shapes::*;
+    pub use crate::style::*;
 }
