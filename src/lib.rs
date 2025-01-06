@@ -20,10 +20,12 @@ to define a bounding box, etc.
 Drawings can calculate their total size
 "#]
 
+pub mod color;
 pub mod placement;
 pub mod shapes;
 
 pub mod prelude {
+    pub use crate::color::*;
     pub use crate::placement::*;
     pub use crate::shapes::*;
 }

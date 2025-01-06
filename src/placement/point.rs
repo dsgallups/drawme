@@ -2,7 +2,7 @@ use nalgebra::Point2;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Point(Point2<f64>);
 impl Point {
