@@ -45,7 +45,7 @@ impl Path {
     }
 }
 
-impl<C: Canvas + ?Sized> Drawable<C> for Path {
+impl<C: Canvas + ?Sized> Draw<C> for Path {
     fn draw(&self, canvas: &mut C) {
         canvas.path(self)
     }
