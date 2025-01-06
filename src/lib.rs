@@ -28,18 +28,21 @@ pub mod color;
 #[macro_use]
 mod macros;
 pub mod canvas;
-pub mod draw;
+pub mod drawable;
 pub mod image;
 pub mod placement;
 pub mod primitives;
 pub mod style;
+pub mod text;
 
 pub mod prelude {
     pub use crate::canvas::*;
     pub use crate::color::{defaults::*, *};
-    pub use crate::draw::*;
+    pub use crate::drawable::*;
     pub use crate::image::*;
     pub use crate::placement::*;
     pub use crate::primitives::*;
     pub use crate::style::*;
+    pub use crate::text::font::*;
+    pub use crate::text::*;
 }

@@ -17,3 +17,9 @@ impl Circle {
         }
     }
 }
+
+impl<C: Canvas + ?Sized> Drawable<C> for Circle {
+    fn draw(&self, canvas: &mut C) {
+        canvas.circle(self.position, self.radius)
+    }
+}

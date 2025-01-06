@@ -45,6 +45,12 @@ impl Path {
     }
 }
 
+impl<C: Canvas + ?Sized> Drawable<C> for Path {
+    fn draw(&self, canvas: &mut C) {
+        canvas.path(self)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum PathCommand {
