@@ -3,6 +3,8 @@ use crate::prelude::*;
 #[cfg(feature = "svg")]
 pub mod svg;
 
+pub mod debug;
+
 pub trait Canvas {
     fn set_fill(&mut self, paint: &Paint);
     fn set_stroke_color(&mut self, paint: &Paint);
@@ -21,5 +23,5 @@ pub trait Canvas {
         self.path(&path);
     }
     fn circle(&mut self, point: Point, radius: f64);
-    fn image(&mut self, src: ImageSource);
+    fn image(&mut self, src: &ImageSource);
 }

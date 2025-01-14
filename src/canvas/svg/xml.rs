@@ -2,11 +2,13 @@ use std::borrow::Cow;
 
 use quick_xml::events::{attributes::Attribute, BytesStart, BytesText};
 
+#[derive(Debug)]
 enum XmlNodeInner<'a> {
     Nodes(Vec<XmlNode<'a>>),
     Text(BytesText<'a>),
 }
 
+#[derive(Debug)]
 pub struct XmlNode<'a> {
     tag: BytesStart<'a>,
     inner: Option<XmlNodeInner<'a>>,

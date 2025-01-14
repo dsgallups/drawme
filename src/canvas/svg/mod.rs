@@ -14,15 +14,24 @@ quick-xml v0.37.2 features:
 
 */
 
+use std::fmt::Display;
+
 use crate::prelude::*;
 
 mod xml;
 pub use xml::*;
 
+#[derive(Debug)]
 pub struct Svg<'a> {
     root: XmlNode<'a>,
     stroke_gradients: Vec<Gradient>,
     fill_gradients: Vec<Gradient>,
+}
+
+impl Display for Svg<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
 }
 
 impl Default for Svg<'_> {
@@ -54,7 +63,7 @@ impl Canvas for Svg<'_> {
     fn text(&mut self, text: &str, font: &FontProps<'_>) {
         todo!()
     }
-    fn image(&mut self, src: ImageSource) {
+    fn image(&mut self, src: &ImageSource) {
         todo!()
     }
     fn circle(&mut self, point: Point, radius: f64) {
