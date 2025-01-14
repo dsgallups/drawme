@@ -8,6 +8,7 @@ repository = "https://github.com/dsgallups/drawme"
 documentation = "https://docs.rs/drawme"
 readme = "README.md"
 keywords = ["2d", "rendering"]
+categories = ["graphics", "gui", "rendering::engine"]
 license = "MIT OR Apache-2.0"
 
 [features]
