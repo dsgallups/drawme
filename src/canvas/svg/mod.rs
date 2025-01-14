@@ -38,15 +38,6 @@ impl Default for Svg<'_> {
 }
 
 impl Canvas for Svg<'_> {
-    type Props = ();
-
-    fn new_with_props(props: Self::Props) -> Self
-    where
-        Self: Sized,
-    {
-        todo!();
-    }
-
     fn set_fill(&mut self, fill: &Paint) {
         todo!()
     }
