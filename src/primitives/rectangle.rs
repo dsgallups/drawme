@@ -5,6 +5,8 @@ use crate::prelude::*;
 /// Rectangle is a simple rectangle
 ///
 /// Its operations are non-commutative.
+///
+/// TODO: check if translation occurs before rotation
 #[derive(Debug, PartialEq, Clone)]
 pub struct Rectangle {
     /// The point closest to the origin (top_left)

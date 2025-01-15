@@ -45,8 +45,8 @@ impl<T: Canvas> Canvas for Dbg<T> {
         self.log(format!("circle: {:?}, {:?}", point, radius));
         self.inner.circle(point, radius);
     }
-    fn rectangle(&mut self, top_left: Point, bottom_right: Point) {
-        self.log(format!("rectangle: {:?}, {:?}", top_left, bottom_right));
-        self.inner.rectangle(top_left, bottom_right);
+    fn rectangle(&mut self, rectangle: &Rectangle) {
+        self.log(format!("rectangle: {:?}", rectangle));
+        self.inner.rectangle(rectangle);
     }
 }

@@ -37,8 +37,20 @@ pub struct Svg<N> {
 }
 
 impl<N: SvgNode> Svg<N> {
-    pub fn handle_new_element(&mut self, el: N) {
-        todo!()
+    fn handle_new_element(&mut self, mut el: N) {
+        if let Some(fill) = &self.active_fill {
+            el.push_attribute("fill", fill.css());
+        }
+
+        if let Some(stroke) = &self.active_stroke {
+            el.push_attribute("stroke", stroke.css());
+        }
+
+        if let Some(sw) = &self.active_stroke_width {
+            el.push_attribute("stroke-width", sw);
+        }
+
+        self.root.push_child(el);
     }
 }
 
@@ -143,8 +155,10 @@ impl<N: SvgNode> Canvas for Svg<N> {
         } else {
             svg_text.push_attribute("transform", translate_str.as_str());
         }
+
+        self.handle_new_element(svg_text);
     }
-    fn image(&mut self, src: &ImageSource) {
+    fn image(&mut self, _src: &ImageSource) {
         todo!()
     }
     fn circle(&mut self, point: Point, radius: f64) {
@@ -155,8 +169,5 @@ impl<N: SvgNode> Canvas for Svg<N> {
             .push_attribute("r", radius);
 
         self.handle_new_element(circle);
-    }
-    fn rectangle(&mut self, top_left: Point, bottom_right: Point) {
-        todo!()
     }
 }
