@@ -21,20 +21,25 @@ use crate::prelude::*;
 mod xml;
 pub use xml::*;
 
+mod node;
+pub use node::*;
+
+pub type XmlSvg<'a> = Svg<XmlNode<'a>>;
+
 #[derive(Debug)]
-pub struct Svg<'a> {
-    root: XmlNode<'a>,
+pub struct Svg<N> {
+    root: N,
     stroke_gradients: Vec<Gradient>,
     fill_gradients: Vec<Gradient>,
 }
 
-impl Display for Svg<'_> {
+impl<N: SvgNode> Display for Svg<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
 
-impl Default for Svg<'_> {
+impl Default for XmlSvg<'_> {
     fn default() -> Self {
         Self {
             root: XmlNode::builder("svg")
@@ -46,7 +51,7 @@ impl Default for Svg<'_> {
     }
 }
 
-impl Canvas for Svg<'_> {
+impl<N: SvgNode> Canvas for Svg<N> {
     fn set_fill(&mut self, fill: &Paint) {
         todo!()
     }
