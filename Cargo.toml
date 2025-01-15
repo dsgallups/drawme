@@ -12,19 +12,20 @@ categories = ["graphics", "gui", "rendering::engine"]
 license = "MIT OR Apache-2.0"
 
 [features]
-default = ["svg"]
-svg = ["dep:quick-xml"]
+default = ["svg", "xml"]
+svg = ["dep:regex"]
+xml = ["dep:quick-xml"]
 serde = [
     "dep:serde",
     "nalgebra/serde-serialize",
     "url/serde",
     "quick-xml/serde",
 ]
-quick-xml = ["dep:quick-xml"]
 
 [dependencies]
 fontdb = "0.23.0"
 nalgebra = { version = "0.33", default-features = false, features = ["std"] }
 quick-xml = { version = "0.37.2", default-features = false, optional = true }
+regex = { version = "1.11.1", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 url = "2.5.4"

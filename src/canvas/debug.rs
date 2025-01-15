@@ -16,15 +16,15 @@ impl<T> Dbg<T> {
 }
 
 impl<T: Canvas> Canvas for Dbg<T> {
-    fn set_fill(&mut self, fill: &Paint) {
+    fn set_fill(&mut self, fill: Option<&Paint>) {
         self.log(format!("set_fill: {:?}", fill));
         self.inner.set_fill(fill);
     }
-    fn set_stroke_color(&mut self, paint: &Paint) {
+    fn set_stroke_color(&mut self, paint: Option<&Paint>) {
         self.log(format!("set_stroke_color: {:?}", paint));
         self.inner.set_stroke_color(paint);
     }
-    fn set_stroke_width(&mut self, width: f64) {
+    fn set_stroke_width(&mut self, width: Option<f64>) {
         self.log(format!("set_stroke_width: {:?}", width));
         self.inner.set_stroke_width(width);
     }

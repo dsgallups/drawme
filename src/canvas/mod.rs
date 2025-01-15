@@ -3,12 +3,13 @@ use crate::prelude::*;
 pub mod debug;
 #[cfg(feature = "svg")]
 pub mod svg;
+#[cfg(feature = "xml")]
 pub mod xml;
 
 pub trait Canvas {
-    fn set_fill(&mut self, paint: &Paint);
-    fn set_stroke_color(&mut self, paint: &Paint);
-    fn set_stroke_width(&mut self, width: f64);
+    fn set_fill(&mut self, paint: Option<&Paint>);
+    fn set_stroke_color(&mut self, paint: Option<&Paint>);
+    fn set_stroke_width(&mut self, width: Option<f64>);
 
     fn path(&mut self, path: &Path);
     fn text(&mut self, text: &str, font: &FontProps<'_>);

@@ -19,6 +19,11 @@ impl Path {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, PathCommand> {
+        self.0.iter()
+    }
+
     pub fn move_to(&mut self, point: impl Into<Point>) {
         self.0.push(PathCommand::MoveTo(point.into()))
     }
