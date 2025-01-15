@@ -115,17 +115,41 @@ impl<N: SvgNode> Canvas for Svg<N> {
             .join(" ");
 
         path_el.push_attribute("d", path_attr);
+        self.handle_new_element(path_el);
     }
     fn text(&mut self, text: &str, font: &FontProps<'_>) {
-        todo!()
+        let style = format!(
+            "font-size: {}; font-family: {}; font-weight: {}; font-style: {:?}; font-stretch: {:?}",
+            font.size, font.family, font.weight.0, font.style, font.stretch
+        );
+        let rotation_str = rotation.map(|r| format!("rotate({})", r.as_degrees().round_two()));
+        let translate_str = format!(
+            "translate({}, {})",
+            start.x.f64_short(),
+            start.y.f64_short()
+        );
+        let mut svg_text = E::text();
+        svg_text.set_inner(text).set_attribute("style", &style);
+
+        if let Some(rotation_str) = rotation_str {
+            svg_text
+                .set_attribute("transform", format!("{} {}", translate_str, rotation_str))
+                .set_attribute("text-anchor", "start");
+        } else {
+            svg_text.set_attribute("transform", translate_str.as_str());
+        }
     }
     fn image(&mut self, src: &ImageSource) {
         todo!()
     }
     fn circle(&mut self, point: Point, radius: f64) {
         let mut circle = N::circle();
+        circle
+            .push_attribute("cx", point.x())
+            .push_attribute("cy", point.y())
+            .push_attribute("r", radius);
 
-        todo!()
+        self.handle_new_element(circle);
     }
     fn rectangle(&mut self, top_left: Point, bottom_right: Point) {
         todo!()

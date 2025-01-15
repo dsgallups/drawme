@@ -27,6 +27,6 @@ impl<'a> Fill<'a> {
 
 impl<C: Canvas + ?Sized> Draw<C> for Fill<'_> {
     fn draw(&self, canvas: &mut C) {
-        canvas.set_fill(self.paint());
+        canvas.set_fill(Some(self.paint()));
     }
 }

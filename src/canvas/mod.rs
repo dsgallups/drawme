@@ -16,9 +16,9 @@ pub trait Canvas {
     fn rectangle(&mut self, top_left: Point, bottom_right: Point) {
         let mut path = Path::with_capacity(5);
         path.move_to(top_left);
-        path.line_to((bottom_right.x(), top_left.y()));
+        path.line_to(Point::new(bottom_right.x, top_left.y));
         path.line_to(bottom_right);
-        path.line_to((top_left.x(), bottom_right.y()));
+        path.line_to(Point::new(top_left.x, bottom_right.y));
         path.line_to(top_left);
 
         self.path(&path);
