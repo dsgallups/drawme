@@ -12,7 +12,7 @@ pub trait Canvas {
     fn set_stroke_width(&mut self, width: Option<f64>);
 
     fn path(&mut self, path: &Path);
-    fn text(&mut self, text: &str, font: &FontProps<'_>);
+    fn text(&mut self, text: &str, font: &FontProps<'_>, isometry: Isometry);
     fn rectangle(&mut self, top_left: Point, bottom_right: Point) {
         let mut path = Path::with_capacity(5);
         path.move_to(top_left);

@@ -117,7 +117,7 @@ impl<N: SvgNode> Canvas for Svg<N> {
         path_el.push_attribute("d", path_attr);
         self.handle_new_element(path_el);
     }
-    fn text(&mut self, text: &str, font: &FontProps<'_>) {
+    fn text(&mut self, text: &str, font: &FontProps<'_>, similarity: Isometry) {
         let style = format!(
             "font-size: {}; font-family: {}; font-weight: {}; font-style: {:?}; font-stretch: {:?}",
             font.size, font.family, font.weight.0, font.style, font.stretch

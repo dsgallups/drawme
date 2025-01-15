@@ -1,9 +1,10 @@
 use std::fmt::Debug;
-use std::ops::{Add, AddAssign, Sub};
 
 use crate::prelude::*;
 
 /// Rectangle is a simple rectangle
+///
+/// Its operations are non-commutative.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Rectangle {
     /// The point closest to the origin (top_left)
@@ -15,7 +16,7 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    pub fn new(closest: impl Into<Point>, farthest: impl Into<Point>) -> Self {
+    pub fn new(closest: Point, farthest: Point) -> Self {
         Self {
             top_left: closest.into(),
             bottom_right: farthest.into(),
@@ -31,7 +32,7 @@ impl Rectangle {
         }
     }
 
-    pub fn new_from_raw(closest: Point, farthest: Point, rot: Rotation) -> Self {
+    pub const fn new_from_raw(closest: Point, farthest: Point, rot: Rotation) -> Self {
         Self {
             top_left: closest,
             bottom_right: farthest,
@@ -77,10 +78,9 @@ impl Rectangle {
         &mut self.bottom_right
     }
 
-    /// returns the width of the rectangle
-    pub fn rotation(&self) -> &Rotation {
-        let v = self.rot;
-        &self.rot
+    /// returns the rotation of the rectangle
+    pub fn rotation(&self) -> Rotation {
+        self.rot
     }
 
     /// returns closest point to origin accounting for rotation
@@ -93,10 +93,10 @@ impl Rectangle {
         init
     }
 
-    pub fn translate(&mut self, point: Vector) {
-        let v = self.top_left + point;
-        self.top_left = self.top_left + point.clone();
-        self.bottom_right += point;
+    /// This function may be incorrectly implemented if a rotation has occurred. Need to check.
+    pub fn translate(&mut self, by: Vector) {
+        self.top_left += by;
+        self.bottom_right += by;
     }
 
     /// Returns the pixel that utilizes the bottom_right x coordinate and top_left y coordinate, accounting
@@ -127,26 +127,14 @@ impl Rectangle {
         init
     }
 
-    pub fn from_dimensions_and_center(
-        dimensions: impl Into<Vector>,
-        center: impl Into<Vector>,
-    ) -> Self {
-        let dimensions: Vector = dimensions.into();
-        let center: Vector = center.into();
+    pub fn from_dimensions_and_center(dimensions: Vector, center: Point) -> Self {
+        let half = dimensions.scale(0.5);
 
-        let closest = Point::new(
-            center.x() - dimensions.x() / 2.,
-            center.y() - dimensions.y() / 2.,
-        );
-        let farthest = Vector::new(
-            center.x.clone() + dimensions.width / 2.,
-            center.y.clone() + dimensions.height / 2.,
-        );
-        Self {
-            top_left: closest,
-            bottom_right: farthest,
-            rot: Rotation::zero(),
-        }
+        let closest = center - half;
+
+        let farthest = center + half;
+
+        Self::new(closest, farthest)
     }
 
     /*    pub fn into_rounded_rectangle(self) -> RoundedRectangle<Unit>
@@ -157,54 +145,44 @@ impl Rectangle {
     } */
 
     /// returns closest not accounting for rotation
-    pub fn top_left_raw(&self) -> Vector {
+    pub fn top_left_raw(&self) -> Point {
         self.top_left
     }
 
     /// returns top right not accounting for rotation
-    pub fn top_right_raw(&self) -> Vector {
-        Vector::new(self.bottom_right.x, self.top_left.y)
+    pub fn top_right_raw(&self) -> Point {
+        Point::new(self.bottom_right.x, self.top_left.y)
     }
     /// returns bottom left not accounting for rotation
-    pub fn bottom_left_raw(&self) -> Vector {
-        Vector::new(self.top_left.x, self.bottom_right.y)
+    pub fn bottom_left_raw(&self) -> Point {
+        Point::new(self.top_left.x, self.bottom_right.y)
     }
 
     /// returns bottom right not accounting for rotation
-    pub fn bottom_right_raw(&self) -> &Vector {
-        &self.bottom_right
+    pub fn bottom_right_raw(&self) -> Point {
+        self.bottom_right
     }
 
     pub fn absolute_center(&self) -> Point {
-        let center = nalgebra::center(&self.top_left(), &self.bottom_right());
-        let top_left = self.top_left();
-        let dims = self.dimensions();
-        // Vector::new(
-        //     top_left.x.clone() + (self.width().clone() / 2.),
-        //     top_left.y.clone() + (self.height().clone() / 2.),
-        // )
-        todo!()
+        nalgebra::center(&self.top_left(), &self.bottom_right())
     }
 
-    pub fn from_dimensions_and_offset(offset: impl Into<Point>, dimensions: Vector) -> Self {
-        let closest = offset.into();
-        let farthest = (
-            closest.x.clone() + dimensions.width,
-            closest.y.clone() + dimensions.height,
-        )
-            .into();
+    pub fn from_dimensions_and_offset(offset: Point, dimensions: Vector) -> Self {
+        let closest = offset;
+        let farthest = offset + dimensions;
+
         Self {
             top_left: closest,
             bottom_right: farthest,
-            rot: Rotation::zero(),
+            rot: Rotation::identity(),
         }
     }
     pub fn from_dimensions(dimensions: Vector) -> Self {
-        let farthest = (dimensions.x(), dimensions.y()).into();
+        let farthest = Point::new(dimensions.x, dimensions.y);
         Self {
-            top_left: Point::zero(),
+            top_left: Point::origin(),
             bottom_right: farthest,
-            rot: Rotation::zero(),
+            rot: Rotation::identity(),
         }
     }
     pub fn with_offset(mut self, offset: Vector) -> Self {
@@ -213,27 +191,19 @@ impl Rectangle {
         self
     }
 
-    pub const fn const_new(closest: Vector, farthest: Vector) -> Self {
-        Self {
-            top_left: closest,
-            bottom_right: farthest,
-            rot: Rotation::zero(),
-        }
-    }
-
     pub fn relative_center(&self) -> Vector {
         Vector::new(self.width() / 2., self.height() / 2.)
     }
 
     fn height(&self) -> f64 {
-        self.bottom_right.y() - self.top_left.y()
+        self.bottom_right.y - self.top_left.y
     }
 
     fn width(&self) -> f64 {
-        self.bottom_right.x() - self.top_left.x()
+        self.bottom_right.x - self.top_left.x
     }
     fn dimensions(&self) -> Vector {
-        Vector::new(self.width(), self.height())
+        self.bottom_right - self.top_left
     }
 }
 /*impl<Unit: DrawableUnit> DrawableCommand for Rectangle<Unit> {
