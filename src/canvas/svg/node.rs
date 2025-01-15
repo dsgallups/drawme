@@ -13,8 +13,10 @@ use std::fmt;
 ///
 /// Note that [`SvgEl`](super::SvgEl) will be replaced in the future by some general
 /// XML struct in the future, but serves as a quick hack for productivity purposes.
-pub trait SvgNode {
-    fn set_attribute<S1, S2>(&mut self, key: S1, value: S2) -> &mut Self
+///
+/// The I generic is the inner prop of the type
+pub trait SvgNode: Sized {
+    fn push_attribute<S1, S2>(&mut self, key: S1, value: S2) -> &mut Self
     where
         S1: Into<String> + AsRef<str>,
         S2: fmt::Display;
@@ -23,13 +25,9 @@ pub trait SvgNode {
     where
         S: AsRef<str>;
 
-    fn set_inner<S>(&mut self, inner: S) -> &mut Self
-    where
-        S: Into<String> + AsRef<str>;
+    fn set_inner(&mut self, inner: Self) -> &mut Self;
 
-    fn push_to_inner<S>(&mut self, to_add: S) -> &mut Self
-    where
-        S: Into<String> + AsRef<str>;
+    fn push_to_inner(&mut self, to_add: Self) -> &mut Self;
 
     fn prepend_child(&mut self, child: Self) -> &mut Self;
 

@@ -18,9 +18,6 @@ use std::fmt::Display;
 
 use crate::prelude::*;
 
-mod xml;
-pub use xml::*;
-
 mod node;
 pub use node::*;
 
@@ -33,7 +30,7 @@ pub struct Svg<N> {
     fill_gradients: Vec<Gradient>,
 }
 
-impl<N: SvgNode> Display for Svg<N> {
+impl<N: Display> Display for Svg<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
@@ -42,9 +39,7 @@ impl<N: SvgNode> Display for Svg<N> {
 impl Default for XmlSvg<'_> {
     fn default() -> Self {
         Self {
-            root: XmlNode::builder("svg")
-                .with_attributes([("xmlns", "http://w3.org/2000/svg")])
-                .build(),
+            root: XmlNode::element("svg").with_attributes([("xmlns", "http://w3.org/2000/svg")]),
             stroke_gradients: vec![],
             fill_gradients: vec![],
         }

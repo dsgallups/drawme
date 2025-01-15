@@ -1,9 +1,9 @@
 use crate::prelude::*;
 
+pub mod debug;
 #[cfg(feature = "svg")]
 pub mod svg;
-
-pub mod debug;
+pub mod xml;
 
 pub trait Canvas {
     fn set_fill(&mut self, paint: &Paint);
