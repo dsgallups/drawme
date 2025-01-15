@@ -24,28 +24,28 @@ impl Path {
         self.0.iter()
     }
 
-    pub fn move_to(&mut self, point: impl Into<Point>) {
-        self.0.push(PathCommand::MoveTo(point.into()))
+    pub fn move_to(&mut self, point: impl IntoPoint) {
+        self.0.push(PathCommand::MoveTo(point.into_point()))
     }
-    pub fn line_to(&mut self, point: impl Into<Point>) {
-        self.0.push(PathCommand::LineTo(point.into()))
+    pub fn line_to(&mut self, point: impl IntoPoint) {
+        self.0.push(PathCommand::LineTo(point.into_point()))
     }
-    pub fn quad_to(&mut self, control: impl Into<Point>, end: impl Into<Point>) {
+    pub fn quad_to(&mut self, control: impl IntoPoint, end: impl IntoPoint) {
         self.0.push(PathCommand::QuadTo {
-            control: control.into(),
-            end: end.into(),
+            control: control.into_point(),
+            end: end.into_point(),
         })
     }
     pub fn curve_to(
         &mut self,
-        control_one: impl Into<Point>,
-        control_two: impl Into<Point>,
-        end: impl Into<Point>,
+        control_one: impl IntoPoint,
+        control_two: impl IntoPoint,
+        end: impl IntoPoint,
     ) {
         self.0.push(PathCommand::CurveTo {
-            control_one: control_one.into(),
-            control_two: control_two.into(),
-            end: end.into(),
+            control_one: control_one.into_point(),
+            control_two: control_two.into_point(),
+            end: end.into_point(),
         })
     }
 }

@@ -10,9 +10,9 @@ pub struct Circle {
 }
 
 impl Circle {
-    pub fn new(position: impl Into<Point>, radius: f64) -> Self {
+    pub fn new(position: impl IntoPoint, radius: f64) -> Self {
         Self {
-            position: position.into(),
+            position: position.into_point(),
             radius,
         }
     }

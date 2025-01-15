@@ -16,10 +16,10 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
-    pub fn new(closest: Point, farthest: Point) -> Self {
+    pub fn new(closest: impl IntoPoint, farthest: impl IntoPoint) -> Self {
         Self {
-            top_left: closest.into(),
-            bottom_right: farthest.into(),
+            top_left: closest.into_point(),
+            bottom_right: farthest.into_point(),
             rot: Rotation::identity(),
         }
     }
@@ -87,7 +87,7 @@ impl Rectangle {
     pub fn top_left(&self) -> Point {
         let mut init = self.top_left;
         if self.rot != Rotation::identity() {
-            init = init.rotate_around(self.rot, self.absolute_center());
+            init = init.rotate_around(&self.rot, &self.absolute_center());
         }
 
         init
@@ -104,7 +104,7 @@ impl Rectangle {
     pub fn top_right(&self) -> Point {
         let mut init = Point::new(self.bottom_right.x, self.top_left.y);
         if self.rot != Rotation::identity() {
-            init = init.rotate_around(self.rot, self.absolute_center());
+            init = init.rotate_around(&self.rot, &self.absolute_center());
         }
         init
     }
@@ -113,7 +113,7 @@ impl Rectangle {
     pub fn bottom_left(&self) -> Point {
         let mut init = Point::new(self.top_left.x, self.bottom_right.y);
         if self.rot != Rotation::identity() {
-            init = init.rotate_around(self.rot, self.absolute_center());
+            init = init.rotate_around(&self.rot, &self.absolute_center());
         }
         init
     }
@@ -122,7 +122,7 @@ impl Rectangle {
     pub fn bottom_right(&self) -> Point {
         let mut init = self.bottom_right;
         if self.rot != Rotation::identity() {
-            init = init.rotate_around(self.rot, self.absolute_center());
+            init = init.rotate_around(&self.rot, &self.absolute_center());
         }
         init
     }
@@ -185,8 +185,9 @@ impl Rectangle {
             rot: Rotation::identity(),
         }
     }
-    pub fn with_offset(mut self, offset: Vector) -> Self {
-        self.top_left += offset.clone();
+    pub fn with_offset(mut self, offset: impl IntoVector) -> Self {
+        let offset = offset.into_vector();
+        self.top_left += offset;
         self.bottom_right += offset;
         self
     }
