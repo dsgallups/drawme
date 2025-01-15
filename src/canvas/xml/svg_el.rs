@@ -1,6 +1,8 @@
 use core::fmt;
 use std::borrow::Cow;
 
+use quick_xml::events::BytesText;
+
 use crate::canvas::SvgNode;
 
 use super::XmlNode;
@@ -26,20 +28,15 @@ impl SvgNode for XmlNode<'_> {
         }
     }
 
-    fn set_inner(&mut self, inner: Self) -> &mut Self {
-        self.set_children(vec![inner])
+    fn push_child(&mut self, child: Self) -> &mut Self {
+        XmlNode::push_child(self, child)
     }
 
-    fn push_to_inner(&mut self, to_add: Self) -> &mut Self {
-        self.push_child(to_add)
-    }
-
-    fn prepend_child(&mut self, child: Self) -> &mut Self {
-        XmlNode::prepend_child(self, child)
-    }
-
-    fn append_child(&mut self, child: Self) -> &mut Self {
-        self.push_child(child)
+    fn push_text(&mut self, text: Cow<'_, str>) -> &mut Self {
+        XmlNode::push_child(
+            self,
+            BytesText::from_escaped(quick_xml::escape::escape(text.into_owned())),
+        )
     }
 
     fn outer_html(&self) -> String {
@@ -47,7 +44,7 @@ impl SvgNode for XmlNode<'_> {
     }
 
     fn svg_node() -> Self {
-        let mut node = Self::element("svg");
+        let mut node = Self::new("svg");
 
         node.push_attribute(("xmlns", "http://www.w3.org/2000/svg"));
 
@@ -55,24 +52,24 @@ impl SvgNode for XmlNode<'_> {
     }
 
     fn path() -> Self {
-        Self::element("path")
+        Self::new("path")
     }
 
     fn circle() -> Self {
-        Self::element("circle")
+        Self::new("circle")
     }
     fn text() -> Self {
-        Self::element("text")
+        Self::new("text")
     }
     fn defs() -> Self {
-        Self::element("defs")
+        Self::new("defs")
     }
 
     fn linear_gradient() -> Self {
-        Self::element("linearGradient")
+        Self::new("linearGradient")
     }
 
     fn stop() -> Self {
-        Self::element("stop")
+        Self::new("stop")
     }
 }

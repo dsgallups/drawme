@@ -14,7 +14,7 @@ quick-xml v0.37.2 features:
 
 */
 
-use std::{fmt::Display, sync::LazyLock};
+use std::{borrow::Cow, fmt::Display, sync::LazyLock};
 
 use crate::prelude::*;
 
@@ -52,7 +52,7 @@ impl<N: Display> Display for Svg<N> {
 impl Default for XmlSvg<'_> {
     fn default() -> Self {
         Self {
-            root: XmlNode::element("svg").with_attributes([("xmlns", "http://w3.org/2000/svg")]),
+            root: XmlNode::new("svg").with_attributes([("xmlns", "http://w3.org/2000/svg")]),
             stroke_gradients: vec![],
             fill_gradients: vec![],
             active_fill: None,
@@ -86,13 +86,13 @@ impl<N: SvgNode> Canvas for Svg<N> {
                 use PathCommand::*;
                 match command {
                     MoveTo(position) => {
-                        format!("M {} {}", position.x(), position.y())
+                        format!("M {} {}", position.x, position.y)
                     }
                     LineTo(position) => {
-                        format!("L {} {}", position.x(), position.y())
+                        format!("L {} {}", position.x, position.y)
                     }
                     QuadTo { control, end } => {
-                        format!("Q {} {} {} {}", control.x(), control.y(), end.x(), end.y())
+                        format!("Q {} {} {} {}", control.x, control.y, end.x, end.y)
                     }
                     CurveTo {
                         control_one,
@@ -101,12 +101,12 @@ impl<N: SvgNode> Canvas for Svg<N> {
                     } => {
                         format!(
                             "C {} {} {} {} {} {}",
-                            control_one.x(),
-                            control_one.y(),
-                            control_two.x(),
-                            control_two.y(),
-                            end.x(),
-                            end.y()
+                            control_one.x,
+                            control_one.y,
+                            control_two.x,
+                            control_two.y,
+                            end.x,
+                            end.y
                         )
                     }
                 }
@@ -117,26 +117,31 @@ impl<N: SvgNode> Canvas for Svg<N> {
         path_el.push_attribute("d", path_attr);
         self.handle_new_element(path_el);
     }
+
     fn text(&mut self, text: &str, font: &FontProps<'_>, similarity: Isometry) {
         let style = format!(
             "font-size: {}; font-family: {}; font-weight: {}; font-style: {:?}; font-stretch: {:?}",
             font.size, font.family, font.weight.0, font.style, font.stretch
         );
-        let rotation_str = rotation.map(|r| format!("rotate({})", r.as_degrees().round_two()));
-        let translate_str = format!(
-            "translate({}, {})",
-            start.x.f64_short(),
-            start.y.f64_short()
-        );
-        let mut svg_text = E::text();
-        svg_text.set_inner(text).set_attribute("style", &style);
+
+        let rotation = similarity.rotation.to_rotation_matrix();
+        let rotation_str = (rotation != Rotation::identity())
+            .then(|| format!("rotate({})", rotation.angle().to_degrees()));
+
+        let translation = similarity.translation;
+
+        let translate_str = format!("translate({}, {})", translation.x, translation.y);
+        let mut svg_text = N::text();
+        svg_text
+            .push_text(Cow::Borrowed(text))
+            .push_attribute("style", style);
 
         if let Some(rotation_str) = rotation_str {
             svg_text
-                .set_attribute("transform", format!("{} {}", translate_str, rotation_str))
-                .set_attribute("text-anchor", "start");
+                .push_attribute("transform", format!("{} {}", translate_str, rotation_str))
+                .push_attribute("text-anchor", "start");
         } else {
-            svg_text.set_attribute("transform", translate_str.as_str());
+            svg_text.push_attribute("transform", translate_str.as_str());
         }
     }
     fn image(&mut self, src: &ImageSource) {
@@ -145,8 +150,8 @@ impl<N: SvgNode> Canvas for Svg<N> {
     fn circle(&mut self, point: Point, radius: f64) {
         let mut circle = N::circle();
         circle
-            .push_attribute("cx", point.x())
-            .push_attribute("cy", point.y())
+            .push_attribute("cx", point.x)
+            .push_attribute("cy", point.y)
             .push_attribute("r", radius);
 
         self.handle_new_element(circle);

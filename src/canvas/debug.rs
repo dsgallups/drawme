@@ -33,9 +33,9 @@ impl<T: Canvas> Canvas for Dbg<T> {
         self.log(format!("path: {:?}", path));
         self.inner.path(path);
     }
-    fn text(&mut self, text: &str, font: &FontProps<'_>) {
-        self.log(format!("text: {:?}, {:?}", text, font));
-        self.inner.text(text, font);
+    fn text(&mut self, text: &str, font: &FontProps<'_>, iso: Isometry) {
+        self.log(format!("text: {:?}, {:?}, {:?}", text, font, iso));
+        self.inner.text(text, font, iso);
     }
     fn image(&mut self, src: &ImageSource) {
         self.log(format!("image: {:?}", src));

@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 /// Defines some medium of which an Svg element can be represented
 ///
@@ -15,7 +15,7 @@ use std::fmt;
 /// XML struct in the future, but serves as a quick hack for productivity purposes.
 ///
 /// The I generic is the inner prop of the type
-pub trait SvgNode: Sized {
+pub trait SvgNode {
     fn push_attribute<S1, S2>(&mut self, key: S1, value: S2) -> &mut Self
     where
         S1: Into<String> + AsRef<str>,
@@ -25,13 +25,9 @@ pub trait SvgNode: Sized {
     where
         S: AsRef<str>;
 
-    fn set_inner(&mut self, inner: Self) -> &mut Self;
+    fn push_text(&mut self, text: Cow<'_, str>) -> &mut Self;
 
-    fn push_to_inner(&mut self, to_add: Self) -> &mut Self;
-
-    fn prepend_child(&mut self, child: Self) -> &mut Self;
-
-    fn append_child(&mut self, child: Self) -> &mut Self;
+    fn push_child(&mut self, child: Self) -> &mut Self;
 
     fn outer_html(&self) -> String;
 
