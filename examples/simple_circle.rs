@@ -6,7 +6,7 @@ fn main() {
     let circle = Circle::new((5., 5.), 3.);
     let svg: Dbg<XmlSvg> = circle.with_style(Fill::new(BLACK)).draw_onto_canvas();
 
-    panic!("{:?}", svg);
+    let svg = svg.into_inner();
 
     //svg will have a width and height of 8px.
 }

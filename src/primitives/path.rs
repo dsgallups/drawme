@@ -48,6 +48,30 @@ impl Path {
             end: end.into_point(),
         })
     }
+
+    pub fn bounding_box(&self) -> Rectangle {
+        let mut max = Point::origin();
+
+        let mut commands = self.iter();
+
+        let Some(first) = commands.next() else {
+            return Rectangle::zero();
+        };
+        let mut min = first.get_min();
+
+        for command in commands {
+            let min_p = command.get_min();
+            let max_p = command.get_max();
+            if min_p < min {
+                min = min_p;
+            }
+            if max_p > max {
+                max = max_p;
+            }
+        }
+
+        Rectangle::new(min, max)
+    }
 }
 
 impl Primitive for Path {
@@ -80,4 +104,68 @@ pub enum PathCommand {
         control_two: Point,
         end: Point,
     },
+}
+
+impl PathCommand {
+    // Gets the point closest to the origin
+    pub fn get_min(&self) -> Point {
+        use PathCommand as P;
+        match self {
+            P::MoveTo(p) | P::LineTo(p) => *p,
+            P::QuadTo { control, end } => {
+                if control < end {
+                    *control
+                } else {
+                    *end
+                }
+            }
+            P::CurveTo {
+                control_one,
+                control_two,
+                end,
+            } => {
+                let min_control = if control_one < control_two {
+                    control_one
+                } else {
+                    control_two
+                };
+                if min_control < end {
+                    *min_control
+                } else {
+                    *end
+                }
+            }
+        }
+    }
+
+    /// Returns the point farthest from the origin. Does not account for bends in curves that go beyond points
+    pub fn get_max(&self) -> Point {
+        use PathCommand as P;
+        match self {
+            P::MoveTo(p) | P::LineTo(p) => *p,
+            P::QuadTo { control, end } => {
+                if control > end {
+                    *control
+                } else {
+                    *end
+                }
+            }
+            P::CurveTo {
+                control_one,
+                control_two,
+                end,
+            } => {
+                let max_control = if control_one > control_two {
+                    control_one
+                } else {
+                    control_two
+                };
+                if max_control > end {
+                    *max_control
+                } else {
+                    *end
+                }
+            }
+        }
+    }
 }

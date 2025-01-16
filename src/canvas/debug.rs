@@ -8,6 +8,12 @@ pub struct Dbg<T: ?Sized> {
     pub inner: T,
 }
 
+impl<T> Dbg<T> {
+    pub fn into_inner(self) -> T {
+        self.inner
+    }
+}
+
 impl<T: ?Sized> Dbg<T> {
     pub fn log(&mut self, val: impl fmt::Display) {
         self.logs.push(val.to_string());

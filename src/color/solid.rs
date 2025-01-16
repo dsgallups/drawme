@@ -9,3 +9,11 @@ pub enum SolidColor {
     Opaque(Rgb),
     Alpha(Rgba),
 }
+impl SolidColor {
+    pub fn css(&self) -> String {
+        match self {
+            SolidColor::Alpha(a) => a.css(),
+            SolidColor::Opaque(o) => o.css(),
+        }
+    }
+}

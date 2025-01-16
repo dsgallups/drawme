@@ -35,13 +35,24 @@ pub struct Svg<N> {
 }
 
 impl<N: SvgNode> Svg<N> {
-    fn handle_new_element(&mut self, style: DrawStyle<'_>, mut el: N) {
+    fn handle_new_element(
+        &mut self,
+        style: DrawStyle<'_>,
+        mut el: N,
+        farthest_offset: Option<Vector>,
+    ) {
+        if let Some(max_offset) = farthest_offset {
+            if max_offset > self.bounding_box {
+                self.bounding_box = max_offset;
+            }
+        }
+
         if let Some(fill) = &style.fill {
-            el.push_attribute("fill", fill.css());
+            handle_paint(fill, &mut self.fill_gradients, &mut el, "fill");
         }
 
         if let Some(stroke) = &style.stroke {
-            el.push_attribute("stroke", stroke.css());
+            handle_paint(stroke, &mut self.stroke_gradients, &mut el, "stroke");
         }
 
         if let Some(sw) = &style.stroke_width {
@@ -49,6 +60,50 @@ impl<N: SvgNode> Svg<N> {
         }
 
         self.root.push_child(el);
+    }
+
+    pub fn build(mut self) -> String {
+        self.root.push_attribute(
+            "viewBox",
+            format!("0 0 {} {}", self.bounding_box.x, self.bounding_box.y),
+        );
+
+        if !self.fill_gradients.is_empty() || !self.stroke_gradients.is_empty() {
+            let mut defs = N::defs();
+            for (i, gradient) in self.stroke_gradients.iter().enumerate() {
+                let mut gn: N = gradient.to_svg_node();
+                gn.push_attribute("id", format!("stroke{}", i));
+                defs.push_child(gn);
+            }
+
+            for (i, gradient) in self.fill_gradients.iter().enumerate() {
+                let mut gn: N = gradient.to_svg_node();
+                gn.push_attribute("id", format!("fill{}", i));
+                defs.push_child(gn);
+            }
+
+            self.root.prepend_child(defs);
+        }
+        todo!()
+    }
+}
+
+fn handle_paint<N: SvgNode>(paint: &Paint, gradients: &mut Vec<Gradient>, el: &mut N, key: &str) {
+    match paint {
+        Paint::Gradient(gradient) => {
+            let gradient_no = gradients
+                .iter()
+                .position(|g| g == gradient)
+                .unwrap_or_else(|| {
+                    gradients.push(gradient.clone());
+                    gradients.len() - 1
+                });
+
+            el.push_attribute(key, format!("url(#{}{})", key, gradient_no));
+        }
+        Paint::Solid(color) => {
+            el.push_attribute(key, color.css());
+        }
     }
 }
 
@@ -77,6 +132,8 @@ static VIEWBOX_R: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"viewBox="([^"
 impl<N: SvgNode> Canvas for Svg<N> {
     fn path(&mut self, style: DrawStyle<'_>, path: &Path) {
         let mut path_el = N::path();
+
+        let offset = path.bounding_box();
 
         let path_attr = path
             .iter()
@@ -113,7 +170,7 @@ impl<N: SvgNode> Canvas for Svg<N> {
             .join(" ");
 
         path_el.push_attribute("d", path_attr);
-        self.handle_new_element(style, path_el);
+        self.handle_new_element(style, path_el, Some(offset.bottom_right_raw().coords));
     }
 
     fn text(
@@ -148,7 +205,7 @@ impl<N: SvgNode> Canvas for Svg<N> {
             svg_text.push_attribute("transform", translate_str.as_str());
         }
 
-        self.handle_new_element(draw_style, svg_text);
+        self.handle_new_element(draw_style, svg_text, None);
     }
     fn image(&mut self, _src: &ImageSource) {
         todo!()
@@ -160,6 +217,8 @@ impl<N: SvgNode> Canvas for Svg<N> {
             .push_attribute("cy", point.y)
             .push_attribute("r", radius);
 
-        self.handle_new_element(style, circle);
+        let offset = Vector::new(point.x + radius, point.y + radius);
+
+        self.handle_new_element(style, circle, Some(offset));
     }
 }

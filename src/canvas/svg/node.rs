@@ -27,6 +27,8 @@ pub trait SvgNode {
 
     fn push_text(&mut self, text: Cow<'_, str>) -> &mut Self;
 
+    fn prepend_child(&mut self, child: Self) -> &mut Self;
+
     fn push_child(&mut self, child: Self) -> &mut Self;
 
     fn outer_html(&self) -> String;

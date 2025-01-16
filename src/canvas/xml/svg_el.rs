@@ -32,6 +32,10 @@ impl SvgNode for XmlNode<'_> {
         XmlNode::push_child(self, child)
     }
 
+    fn prepend_child(&mut self, child: Self) -> &mut Self {
+        XmlNode::prepend_child(self, child)
+    }
+
     fn push_text(&mut self, text: Cow<'_, str>) -> &mut Self {
         XmlNode::push_child(
             self,

@@ -18,4 +18,12 @@ impl Rgba {
     pub const fn new(r: u8, g: u8, b: u8, a: f64) -> Self {
         Self { r, g, b, a }
     }
+
+    pub fn css(&self) -> String {
+        format!("rgba({}, {}, {}, {})", self.r, self.g, self.b, self.a)
+    }
+
+    pub const fn into_tuple(self) -> (u8, u8, u8, f64) {
+        (self.r, self.g, self.b, self.a)
+    }
 }
