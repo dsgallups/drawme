@@ -18,10 +18,28 @@ impl Circle {
     }
 }
 
-impl<S> Primitive<S> for Circle {}
-
-impl<C: Canvas + ?Sized> Draw<C> for Circle {
-    fn draw(&self, canvas: &mut C) {
-        canvas.circle(self.position, self.radius)
+impl Primitive for Circle {
+    fn draw_primitive<'c, C>(&'c self, canvas: &'c mut C) -> impl FnMut(DrawStyle<'_>) + 'c
+    where
+        C: Canvas,
+    {
+        |style: DrawStyle<'_>| {
+            canvas.circle(style, self.position, self.radius);
+        }
+    }
+    fn draw_primitive_boxed<'c>(
+        &'c self,
+        canvas: &'c mut dyn Canvas,
+    ) -> Box<dyn FnMut(DrawStyle<'_>) + 'c> {
+        Box::new(|style: DrawStyle<'_>| {
+            canvas.circle(style, self.position, self.radius);
+        })
     }
 }
+
+// fn do_half<'style, 'cvs, 'cir, C: Canvas + ?Sized>(
+//     circle: &'cir Circle,
+//     canvas: &'cvs mut C,
+// ) -> impl FnOnce(DrawStyle<'style>) + use<'cvs, 'style, 'cir, C> {
+//     return |style: DrawStyle<'style>| canvas.circle(style, circle.position, circle.radius);
+// }

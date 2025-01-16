@@ -13,8 +13,8 @@ impl<'a> Fill<'a> {
         self.0.to_mut()
     }
 
-    pub fn paint(&self) -> &Paint {
-        &self.0
+    pub fn paint<'slf: 'a>(&'slf self) -> &'a Paint {
+        self.0.as_ref()
     }
 
     pub fn into_cow(self) -> Cow<'a, Paint> {
@@ -25,8 +25,17 @@ impl<'a> Fill<'a> {
     }
 }
 
-impl<C: Canvas + ?Sized> Draw<C> for Fill<'_> {
-    fn draw(&self, canvas: &mut C) {
-        canvas.set_fill(Some(self.paint()));
+impl AsDrawStyle for Fill<'_> {
+    fn as_draw_style(&self) -> DrawStyle<'_> {
+        DrawStyle {
+            fill: Some(Cow::Borrowed(self.paint())),
+            ..Default::default()
+        }
+    }
+    fn into_draw_style<'b>(self) -> DrawStyle<'b>
+    where
+        Self: 'b,
+    {
+        DrawStyle::from_fill(self)
     }
 }

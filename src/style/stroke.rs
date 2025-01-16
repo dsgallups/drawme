@@ -25,8 +25,17 @@ impl<'a> StrokeColor<'a> {
     }
 }
 
-impl<C: Canvas + ?Sized> Draw<C> for StrokeColor<'_> {
-    fn draw(&self, canvas: &mut C) {
-        canvas.set_stroke_color(Some(self.paint()));
+impl AsDrawStyle for StrokeColor<'_> {
+    fn as_draw_style(&self) -> DrawStyle<'_> {
+        DrawStyle {
+            stroke: Some(Cow::Borrowed(self.paint())),
+            ..Default::default()
+        }
+    }
+    fn into_draw_style<'b>(self) -> DrawStyle<'b>
+    where
+        Self: 'b,
+    {
+        DrawStyle::from_stroke(self)
     }
 }

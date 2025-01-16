@@ -205,7 +205,7 @@ impl Rectangle {
     fn width(&self) -> f64 {
         self.bottom_right.x - self.top_left.x
     }
-    fn dimensions(&self) -> Vector {
+    pub fn dimensions(&self) -> Vector {
         self.bottom_right - self.top_left
     }
 }

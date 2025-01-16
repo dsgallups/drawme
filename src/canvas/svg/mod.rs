@@ -31,22 +31,20 @@ pub struct Svg<N> {
     stroke_gradients: Vec<Gradient>,
     fill_gradients: Vec<Gradient>,
 
-    active_fill: Option<Paint>,
-    active_stroke: Option<Paint>,
-    active_stroke_width: Option<f64>,
+    bounding_box: Vector,
 }
 
 impl<N: SvgNode> Svg<N> {
-    fn handle_new_element(&mut self, mut el: N) {
-        if let Some(fill) = &self.active_fill {
+    fn handle_new_element(&mut self, style: DrawStyle<'_>, mut el: N) {
+        if let Some(fill) = &style.fill {
             el.push_attribute("fill", fill.css());
         }
 
-        if let Some(stroke) = &self.active_stroke {
+        if let Some(stroke) = &style.stroke {
             el.push_attribute("stroke", stroke.css());
         }
 
-        if let Some(sw) = &self.active_stroke_width {
+        if let Some(sw) = &style.stroke_width {
             el.push_attribute("stroke-width", sw);
         }
 
@@ -67,9 +65,7 @@ impl Default for XmlSvg<'_> {
             root: XmlNode::new("svg").with_attributes([("xmlns", "http://w3.org/2000/svg")]),
             stroke_gradients: vec![],
             fill_gradients: vec![],
-            active_fill: None,
-            active_stroke: None,
-            active_stroke_width: None,
+            bounding_box: Vector::zeros(),
         }
     }
 }
@@ -79,17 +75,7 @@ static WIDTH_R: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"width="(\d+)""#
 static VIEWBOX_R: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"viewBox="([^"]+)""#).unwrap());
 
 impl<N: SvgNode> Canvas for Svg<N> {
-    fn set_fill(&mut self, fill: Option<&Paint>) {
-        self.active_fill = fill.cloned();
-    }
-    fn set_stroke_color(&mut self, paint: Option<&Paint>) {
-        self.active_stroke = paint.cloned();
-    }
-    fn set_stroke_width(&mut self, width: Option<f64>) {
-        self.active_stroke_width = width;
-    }
-
-    fn path(&mut self, path: &Path) {
+    fn path(&mut self, style: DrawStyle<'_>, path: &Path) {
         let mut path_el = N::path();
 
         let path_attr = path
@@ -127,10 +113,16 @@ impl<N: SvgNode> Canvas for Svg<N> {
             .join(" ");
 
         path_el.push_attribute("d", path_attr);
-        self.handle_new_element(path_el);
+        self.handle_new_element(style, path_el);
     }
 
-    fn text(&mut self, text: &str, font: &FontProps<'_>, similarity: Isometry) {
+    fn text(
+        &mut self,
+        draw_style: DrawStyle<'_>,
+        text: &str,
+        font: &FontProps<'_>,
+        similarity: Isometry,
+    ) {
         let style = format!(
             "font-size: {}; font-family: {}; font-weight: {}; font-style: {:?}; font-stretch: {:?}",
             font.size, font.family, font.weight.0, font.style, font.stretch
@@ -156,18 +148,18 @@ impl<N: SvgNode> Canvas for Svg<N> {
             svg_text.push_attribute("transform", translate_str.as_str());
         }
 
-        self.handle_new_element(svg_text);
+        self.handle_new_element(draw_style, svg_text);
     }
     fn image(&mut self, _src: &ImageSource) {
         todo!()
     }
-    fn circle(&mut self, point: Point, radius: f64) {
+    fn circle(&mut self, style: DrawStyle<'_>, point: Point, radius: f64) {
         let mut circle = N::circle();
         circle
             .push_attribute("cx", point.x)
             .push_attribute("cy", point.y)
             .push_attribute("r", radius);
 
-        self.handle_new_element(circle);
+        self.handle_new_element(style, circle);
     }
 }

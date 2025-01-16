@@ -7,13 +7,9 @@ pub mod svg;
 pub mod xml;
 
 pub trait Canvas {
-    fn set_fill(&mut self, paint: Option<&Paint>);
-    fn set_stroke_color(&mut self, paint: Option<&Paint>);
-    fn set_stroke_width(&mut self, width: Option<f64>);
-
-    fn path(&mut self, path: &Path);
-    fn text(&mut self, text: &str, font: &FontProps<'_>, isometry: Isometry);
-    fn rectangle(&mut self, rectangle: &Rectangle) {
+    fn path(&mut self, style: DrawStyle<'_>, path: &Path);
+    fn text(&mut self, style: DrawStyle<'_>, text: &str, font: &FontProps<'_>, isometry: Isometry);
+    fn rectangle(&mut self, style: DrawStyle<'_>, rectangle: &Rectangle) {
         let top_left = rectangle.top_left();
         let bottom_right = rectangle.bottom_left();
         let mut path = Path::with_capacity(5);
@@ -23,8 +19,8 @@ pub trait Canvas {
         path.line_to(Point::new(top_left.x, bottom_right.y));
         path.line_to(top_left);
 
-        self.path(&path);
+        self.path(style, &path);
     }
-    fn circle(&mut self, point: Point, radius: f64);
+    fn circle(&mut self, style: DrawStyle<'_>, point: Point, radius: f64);
     fn image(&mut self, src: &ImageSource);
 }

@@ -50,9 +50,19 @@ impl Path {
     }
 }
 
-impl<C: Canvas + ?Sized> Draw<C> for Path {
-    fn draw(&self, canvas: &mut C) {
-        canvas.path(self)
+impl Primitive for Path {
+    fn draw_primitive<'c, C>(&'c self, canvas: &'c mut C) -> impl FnMut(DrawStyle<'_>) + 'c
+    where
+        C: Canvas,
+    {
+        |style| canvas.path(style, self)
+    }
+
+    fn draw_primitive_boxed<'c>(
+        &'c self,
+        canvas: &'c mut dyn Canvas,
+    ) -> Box<dyn FnMut(DrawStyle<'_>) + 'c> {
+        Box::new(|style| canvas.path(style, self))
     }
 }
 
