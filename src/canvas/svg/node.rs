@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt};
+use std::{borrow::Cow, fmt, process::Output};
 
 /// Defines some medium of which an Svg element can be represented
 ///
@@ -16,6 +16,9 @@ use std::{borrow::Cow, fmt};
 ///
 /// The I generic is the inner prop of the type
 pub trait SvgNode {
+    type Output;
+    type Error;
+
     fn push_attribute<S1, S2>(&mut self, key: S1, value: S2) -> &mut Self
     where
         S1: Into<String> + AsRef<str>,
@@ -46,4 +49,6 @@ pub trait SvgNode {
     fn linear_gradient() -> Self;
 
     fn stop() -> Self;
+
+    fn build(self) -> Result<Self::Output, Self::Error>;
 }

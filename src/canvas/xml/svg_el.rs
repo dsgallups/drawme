@@ -1,13 +1,16 @@
 use core::fmt;
-use std::borrow::Cow;
+use std::{borrow::Cow, io::Cursor};
 
-use quick_xml::events::BytesText;
+use quick_xml::{events::BytesText, Writer};
 
 use crate::canvas::SvgNode;
 
 use super::XmlNode;
 
 impl SvgNode for XmlNode<'_> {
+    type Output = String;
+    type Error = std::io::Error;
+
     fn push_attribute<S1, S2>(&mut self, key: S1, value: S2) -> &mut Self
     where
         S1: Into<String> + AsRef<str>,
@@ -75,5 +78,15 @@ impl SvgNode for XmlNode<'_> {
 
     fn stop() -> Self {
         Self::new("stop")
+    }
+
+    fn build(self) -> Result<String, std::io::Error> {
+        let mut writer: Writer<Cursor<Vec<u8>>> = Writer::new(Cursor::new(Vec::new()));
+
+        self.write(&mut writer);
+
+        let res = writer.into_inner().into_inner();
+
+        Ok(String::from_utf8(res).unwrap_or_default())
     }
 }

@@ -62,7 +62,7 @@ impl<N: SvgNode> Svg<N> {
         self.root.push_child(el);
     }
 
-    pub fn build(mut self) -> String {
+    pub fn build(mut self) -> Result<N::Output, N::Error> {
         self.root.push_attribute(
             "viewBox",
             format!("0 0 {} {}", self.bounding_box.x, self.bounding_box.y),
@@ -84,7 +84,8 @@ impl<N: SvgNode> Svg<N> {
 
             self.root.prepend_child(defs);
         }
-        todo!()
+
+        self.root.build()
     }
 }
 

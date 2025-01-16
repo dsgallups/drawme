@@ -53,7 +53,7 @@ impl Gradient {
                                 .push_attribute("stop-opacity", a);
                         }
                     }
-                    lin_el.append_child(stop);
+                    lin_el.push_child(stop);
                 }
 
                 lin_el

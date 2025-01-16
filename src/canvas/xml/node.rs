@@ -1,9 +1,12 @@
 use core::fmt;
-use std::borrow::Cow;
+use std::{borrow::Cow, io::Write};
 
-use quick_xml::events::{
-    attributes::{AttrError, Attribute},
-    BytesStart, BytesText,
+use quick_xml::{
+    events::{
+        attributes::{AttrError, Attribute},
+        BytesStart, BytesText, Event,
+    },
+    Writer,
 };
 
 #[derive(Debug, Clone)]
@@ -21,6 +24,13 @@ impl<'a> XmlChild<'a> {
         let bt = BytesText::from_escaped(quick_xml::escape::escape(text));
         Self::Text(bt)
     }
+
+    pub fn write<W: Write>(self, writer: &mut Writer<W>) -> std::io::Result<()> {
+        match self {
+            XmlChild::Text(t) => writer.write_event(Event::Text(t)),
+            XmlChild::Element(e) => e.write(writer),
+        }
+    }
 }
 
 impl<'a> From<XmlNode<'a>> for XmlChild<'a> {
@@ -32,6 +42,16 @@ impl<'a> From<XmlNode<'a>> for XmlChild<'a> {
 impl<'a> From<BytesText<'a>> for XmlChild<'a> {
     fn from(value: BytesText<'a>) -> Self {
         Self::Text(value)
+    }
+}
+
+trait BytesStartExt<'a> {
+    fn into_event(self) -> Event<'a>;
+}
+
+impl<'a> BytesStartExt<'a> for BytesStart<'a> {
+    fn into_event(self) -> Event<'a> {
+        Event::Start(self)
     }
 }
 
@@ -148,5 +168,19 @@ impl<'a> XmlNode<'a> {
     {
         self.tag.extend_attributes(attributes);
         self
+    }
+
+    pub fn write<W: Write>(self, writer: &mut Writer<W>) -> std::io::Result<()> {
+        let Some(children) = self.inner else {
+            return writer.write_event(Event::Empty(self.tag));
+        };
+
+        writer.write_event(Event::Start(self.tag.borrow()))?;
+        for child in children {
+            child.write(writer)?;
+        }
+        writer.write_event(Event::End(self.tag.to_end()))?;
+
+        Ok(())
     }
 }
