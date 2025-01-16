@@ -14,13 +14,12 @@ quick-xml v0.37.2 features:
 
 */
 
-use std::{borrow::Cow, fmt::Display, sync::LazyLock};
+use std::borrow::Cow;
 
 use crate::prelude::*;
 
 mod node;
 pub use node::*;
-use regex::Regex;
 
 #[cfg(feature = "xml")]
 pub type XmlSvg<'a> = Svg<XmlNode<'a>>;
@@ -108,12 +107,6 @@ fn handle_paint<N: SvgNode>(paint: &Paint, gradients: &mut Vec<Gradient>, el: &m
     }
 }
 
-impl<N: Display> Display for Svg<N> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
 #[cfg(feature = "xml")]
 impl Default for XmlSvg<'_> {
     fn default() -> Self {
@@ -125,10 +118,6 @@ impl Default for XmlSvg<'_> {
         }
     }
 }
-
-static HEIGHT_R: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"height="(\d+)""#).unwrap());
-static WIDTH_R: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"width="(\d+)""#).unwrap());
-static VIEWBOX_R: LazyLock<Regex> = LazyLock::new(|| Regex::new(r#"viewBox="([^"]+)""#).unwrap());
 
 impl<N: SvgNode> Canvas for Svg<N> {
     fn path(&mut self, style: DrawStyle<'_>, path: &Path) {

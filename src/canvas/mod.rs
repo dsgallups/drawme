@@ -1,5 +1,6 @@
 use crate::prelude::*;
 
+#[cfg(feature = "debug")]
 pub mod debug;
 #[cfg(feature = "svg")]
 pub mod svg;

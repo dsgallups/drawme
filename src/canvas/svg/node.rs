@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt, process::Output};
+use std::{borrow::Cow, fmt};
 
 /// Defines some medium of which an Svg element can be represented
 ///
@@ -33,8 +33,6 @@ pub trait SvgNode {
     fn prepend_child(&mut self, child: Self) -> &mut Self;
 
     fn push_child(&mut self, child: Self) -> &mut Self;
-
-    fn outer_html(&self) -> String;
 
     fn svg_node() -> Self;
 

@@ -8,7 +8,7 @@ use crate::canvas::SvgNode;
 use super::XmlNode;
 
 impl SvgNode for XmlNode<'_> {
-    type Output = String;
+    type Output = Vec<u8>;
     type Error = std::io::Error;
 
     fn push_attribute<S1, S2>(&mut self, key: S1, value: S2) -> &mut Self
@@ -46,10 +46,6 @@ impl SvgNode for XmlNode<'_> {
         )
     }
 
-    fn outer_html(&self) -> String {
-        self.to_string()
-    }
-
     fn svg_node() -> Self {
         let mut node = Self::new("svg");
 
@@ -80,13 +76,13 @@ impl SvgNode for XmlNode<'_> {
         Self::new("stop")
     }
 
-    fn build(self) -> Result<String, std::io::Error> {
+    fn build(self) -> Result<Vec<u8>, std::io::Error> {
         let mut writer: Writer<Cursor<Vec<u8>>> = Writer::new(Cursor::new(Vec::new()));
 
-        self.write(&mut writer);
+        self.write(&mut writer)?;
 
         let res = writer.into_inner().into_inner();
 
-        Ok(String::from_utf8(res).unwrap_or_default())
+        Ok(res)
     }
 }

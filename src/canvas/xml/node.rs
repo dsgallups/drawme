@@ -1,4 +1,3 @@
-use core::fmt;
 use std::{borrow::Cow, io::Write};
 
 use quick_xml::{
@@ -45,26 +44,10 @@ impl<'a> From<BytesText<'a>> for XmlChild<'a> {
     }
 }
 
-trait BytesStartExt<'a> {
-    fn into_event(self) -> Event<'a>;
-}
-
-impl<'a> BytesStartExt<'a> for BytesStart<'a> {
-    fn into_event(self) -> Event<'a> {
-        Event::Start(self)
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct XmlNode<'a> {
     tag: BytesStart<'a>,
     inner: Option<Vec<XmlChild<'a>>>,
-}
-
-impl fmt::Display for XmlNode<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
 }
 
 impl<'a> XmlNode<'a> {
