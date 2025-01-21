@@ -58,6 +58,7 @@ version = "0.0.0"
 dependencies = [
  "fontdb",
  "nalgebra",
+ "num-traits",
  "quick-xml",
  "regex",
  "serde",

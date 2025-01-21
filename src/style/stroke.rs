@@ -18,6 +18,6 @@ impl<'a> StrokeColor<'a> {
 
 impl AsDrawStyle for StrokeColor<'_> {
     fn stroke(&self) -> Option<Paint<'_>> {
-        Some(self.0.weak_clone())
+        Some(self.0.clone_shallow())
     }
 }

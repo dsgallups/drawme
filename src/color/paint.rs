@@ -13,12 +13,12 @@ pub enum Paint<'a> {
 }
 
 impl Paint<'_> {
-    pub fn solid(solid_color: SolidColor) -> Self {
+    pub const fn solid(solid_color: SolidColor) -> Self {
         Self::Solid(solid_color)
     }
 
     //clones solid color, weakly clones gradient, even if owned
-    pub fn weak_clone(&self) -> Paint<'_> {
+    pub const fn clone_shallow(&self) -> Paint<'_> {
         match self {
             Paint::Solid(s) => Paint::Solid(*s),
             Paint::Gradient(Cow::Borrowed(g)) => Paint::Gradient(Cow::Borrowed(g)),

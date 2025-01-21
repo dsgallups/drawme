@@ -20,7 +20,7 @@ where
     fn draw(&self, canvas: &mut C) {
         // style goes first to set values
         // todo: how to deal with style? Maybe we should implement Draw for all primitives
-        self.shape.draw_primitive(canvas)(&self.style);
+        self.shape.draw_primitive(canvas)(self.style);
     }
 }
 

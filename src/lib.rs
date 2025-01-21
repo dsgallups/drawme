@@ -28,6 +28,7 @@ pub mod color;
 mod macros;
 pub mod canvas;
 pub mod drawable;
+pub mod drawing;
 pub mod image;
 pub mod placement;
 pub mod primitives;
@@ -42,6 +43,7 @@ pub mod prelude {
     pub use crate::canvas::*;
     pub use crate::color::{defaults::*, *};
     pub use crate::drawable::*;
+    pub use crate::drawing::*;
     pub use crate::image::*;
     pub use crate::placement::*;
     pub use crate::primitives::*;

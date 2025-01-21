@@ -1,12 +1,13 @@
 use crate::prelude::*;
+use nalgebra::{Point2, Scalar};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct Path(Vec<PathCommand>);
+pub struct Path<Unit: Scalar = f64>(Vec<PathCommand<Unit>>);
 
-impl Path {
+impl<Unit: Scalar> Path<Unit> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -24,13 +25,13 @@ impl Path {
         self.0.iter()
     }
 
-    pub fn move_to(&mut self, point: impl IntoPoint) {
+    pub fn move_to(&mut self, point: impl IntoPoint<Unit>) {
         self.0.push(PathCommand::MoveTo(point.into_point()))
     }
-    pub fn line_to(&mut self, point: impl IntoPoint) {
+    pub fn line_to(&mut self, point: impl IntoPoint<Unit>) {
         self.0.push(PathCommand::LineTo(point.into_point()))
     }
-    pub fn quad_to(&mut self, control: impl IntoPoint, end: impl IntoPoint) {
+    pub fn quad_to(&mut self, control: impl IntoPoint<Unit>, end: impl IntoPoint<Unit>) {
         self.0.push(PathCommand::QuadTo {
             control: control.into_point(),
             end: end.into_point(),
@@ -38,9 +39,9 @@ impl Path {
     }
     pub fn curve_to(
         &mut self,
-        control_one: impl IntoPoint,
-        control_two: impl IntoPoint,
-        end: impl IntoPoint,
+        control_one: impl IntoPoint<Unit>,
+        control_two: impl IntoPoint<Unit>,
+        end: impl IntoPoint<Unit>,
     ) {
         self.0.push(PathCommand::CurveTo {
             control_one: control_one.into_point(),
@@ -49,8 +50,9 @@ impl Path {
         })
     }
 
+    /*
     pub fn bounding_box(&self) -> Rectangle {
-        let mut max = Point::origin();
+        let mut max = Point2::origin();
 
         let mut commands = self.iter();
 
@@ -72,12 +74,14 @@ impl Path {
 
         Rectangle::new(min, max)
     }
+    */
 }
 
-impl Primitive for Path {
+impl<Unit: Scalar> Primitive for Path<Unit> {
+    type Unit = Unit;
     fn draw_primitive<'c, C, S>(&'c self, canvas: &'c mut C) -> impl FnMut(S) + 'c
     where
-        C: Canvas,
+        C: Canvas<Unit = Self::Unit>,
         S: AsDrawStyle,
     {
         |style| canvas.path(style, self)
@@ -86,34 +90,33 @@ impl Primitive for Path {
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-pub enum PathCommand {
-    MoveTo(Point),
-    LineTo(Point),
+pub enum PathCommand<Unit: Scalar = f64> {
+    MoveTo(Point2<Unit>),
+    LineTo(Point2<Unit>),
     QuadTo {
-        control: Point,
-        end: Point,
+        control: Point2<Unit>,
+        end: Point2<Unit>,
     },
     CurveTo {
-        control_one: Point,
-        control_two: Point,
-        end: Point,
+        control_one: Point2<Unit>,
+        control_two: Point2<Unit>,
+        end: Point2<Unit>,
     },
 }
 
-impl PathCommand {
+impl<Unit: Scalar> PathCommand<Unit> {
     // Gets the point closest to the origin
-    pub fn get_min(&self) -> Point {
-        use PathCommand as P;
+    pub fn get_min(&self) -> Point2<Unit> {
         match self {
-            P::MoveTo(p) | P::LineTo(p) => *p,
-            P::QuadTo { control, end } => {
+            PathCommand::MoveTo(p) | PathCommand::LineTo(p) => *p,
+            PathCommand::QuadTo { control, end } => {
                 if control < end {
                     *control
                 } else {
                     *end
                 }
             }
-            P::CurveTo {
+            PathCommand::CurveTo {
                 control_one,
                 control_two,
                 end,
@@ -133,18 +136,17 @@ impl PathCommand {
     }
 
     /// Returns the point farthest from the origin. Does not account for bends in curves that go beyond points
-    pub fn get_max(&self) -> Point {
-        use PathCommand as P;
+    pub fn get_max(&self) -> Point2<Unit> {
         match self {
-            P::MoveTo(p) | P::LineTo(p) => *p,
-            P::QuadTo { control, end } => {
+            PathCommand::MoveTo(p) | PathCommand::LineTo(p) => *p,
+            PathCommand::QuadTo { control, end } => {
                 if control > end {
                     *control
                 } else {
                     *end
                 }
             }
-            P::CurveTo {
+            PathCommand::CurveTo {
                 control_one,
                 control_two,
                 end,

@@ -18,6 +18,6 @@ impl<'a> Fill<'a> {
 
 impl AsDrawStyle for Fill<'_> {
     fn fill(&self) -> Option<Paint<'_>> {
-        Some(self.0.weak_clone())
+        Some(self.0.clone_shallow())
     }
 }
