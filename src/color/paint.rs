@@ -1,22 +1,66 @@
-use crate::{impl_from, prelude::*};
+use std::borrow::Cow;
+
+use crate::prelude::*;
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[derive(Clone, PartialEq, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-pub enum Paint {
+pub enum Paint<'a> {
     Solid(SolidColor),
-    Gradient(Gradient),
+    Gradient(Cow<'a, Gradient>),
 }
 
-impl Paint {
+impl Paint<'_> {
     pub fn solid(solid_color: SolidColor) -> Self {
         Self::Solid(solid_color)
     }
+
+    //clones solid color, weakly clones gradient, even if owned
+    pub fn weak_clone(&self) -> Paint<'_> {
+        match self {
+            Paint::Solid(s) => Paint::Solid(*s),
+            Paint::Gradient(Cow::Borrowed(g)) => Paint::Gradient(Cow::Borrowed(g)),
+            Paint::Gradient(Cow::Owned(g)) => Paint::Gradient(Cow::Borrowed(g)),
+        }
+    }
 }
 
-impl_from!(SolidColor, Paint, (color) => { Paint::solid(color) });
-impl_from!(Gradient, Paint, (gradient) => { Paint::Gradient(gradient) });
-impl_from!(Rgb, Paint, (rgb) => { Paint::Solid(SolidColor::Opaque(rgb)) });
-impl_from!(Rgba, Paint, (rgba) => { Paint::Solid(SolidColor::Alpha(rgba)) });
+impl From<SolidColor> for Paint<'_> {
+    fn from(value: SolidColor) -> Self {
+        Self::Solid(value)
+    }
+}
+
+impl From<Gradient> for Paint<'_> {
+    fn from(value: Gradient) -> Self {
+        Paint::Gradient(Cow::Owned(value))
+    }
+}
+
+impl<'a> From<&'a Gradient> for Paint<'a> {
+    fn from(value: &'a Gradient) -> Self {
+        Paint::Gradient(Cow::Borrowed(value))
+    }
+}
+
+impl From<Rgb> for Paint<'_> {
+    fn from(value: Rgb) -> Self {
+        Paint::Solid(SolidColor::Opaque(value))
+    }
+}
+
+impl From<Rgba> for Paint<'_> {
+    fn from(value: Rgba) -> Self {
+        Paint::Solid(SolidColor::Alpha(value))
+    }
+}
+
+/*
+Comments remain when switching between risks/incidents
+
+DONE Modal switcher underlying component doesn't resize when letting go of resizer
+
+should accept padded zeroes on url
+*/

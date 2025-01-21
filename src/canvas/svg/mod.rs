@@ -22,7 +22,7 @@ mod node;
 pub use node::*;
 
 #[cfg(feature = "xml")]
-pub type XmlSvg<'a> = Svg<XmlNode<'a>>;
+pub type XmlSvg<'n> = Svg<XmlNode<'n>>;
 
 #[derive(Debug)]
 pub struct Svg<N> {
@@ -34,9 +34,9 @@ pub struct Svg<N> {
 }
 
 impl<N: SvgNode> Svg<N> {
-    fn handle_new_element(
+    fn handle_new_element<S: AsDrawStyle>(
         &mut self,
-        style: DrawStyle<'_>,
+        style: S,
         mut el: N,
         farthest_offset: Option<Vector>,
     ) {
@@ -46,15 +46,15 @@ impl<N: SvgNode> Svg<N> {
             }
         }
 
-        if let Some(fill) = &style.fill {
+        if let Some(fill) = style.fill() {
             handle_paint(fill, &mut self.fill_gradients, &mut el, "fill");
         }
 
-        if let Some(stroke) = &style.stroke {
+        if let Some(stroke) = style.stroke() {
             handle_paint(stroke, &mut self.stroke_gradients, &mut el, "stroke");
         }
 
-        if let Some(sw) = &style.stroke_width {
+        if let Some(sw) = style.stroke_width() {
             el.push_attribute("stroke-width", sw);
         }
 
@@ -88,14 +88,17 @@ impl<N: SvgNode> Svg<N> {
     }
 }
 
-fn handle_paint<N: SvgNode>(paint: &Paint, gradients: &mut Vec<Gradient>, el: &mut N, key: &str) {
+fn handle_paint<N>(paint: Paint<'_>, gradients: &mut Vec<Gradient>, el: &mut N, key: &str)
+where
+    N: SvgNode,
+{
     match paint {
         Paint::Gradient(gradient) => {
             let gradient_no = gradients
                 .iter()
-                .position(|g| g == gradient)
+                .position(|g| g == gradient.as_ref())
                 .unwrap_or_else(|| {
-                    gradients.push(gradient.clone());
+                    gradients.push(gradient.into_owned());
                     gradients.len() - 1
                 });
 
@@ -120,7 +123,7 @@ impl Default for XmlSvg<'_> {
 }
 
 impl<N: SvgNode> Canvas for Svg<N> {
-    fn path(&mut self, style: DrawStyle<'_>, path: &Path) {
+    fn path<S: AsDrawStyle>(&mut self, style: S, path: &Path) {
         let mut path_el = N::path();
 
         let offset = path.bounding_box();
@@ -163,9 +166,9 @@ impl<N: SvgNode> Canvas for Svg<N> {
         self.handle_new_element(style, path_el, Some(offset.bottom_right_raw().coords));
     }
 
-    fn text(
+    fn text<S: AsDrawStyle>(
         &mut self,
-        draw_style: DrawStyle<'_>,
+        draw_style: S,
         text: &str,
         font: &FontProps<'_>,
         similarity: Isometry,
@@ -200,7 +203,7 @@ impl<N: SvgNode> Canvas for Svg<N> {
     fn image(&mut self, _src: &ImageSource) {
         todo!()
     }
-    fn circle(&mut self, style: DrawStyle<'_>, point: Point, radius: f64) {
+    fn circle<S: AsDrawStyle>(&mut self, style: S, point: Point, radius: f64) {
         let mut circle = N::circle();
         circle
             .push_attribute("cx", point.x)

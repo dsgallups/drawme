@@ -15,13 +15,12 @@ If you want to scale, contract, clip, etc. the drawing does not care.
 TODO
 
 ## TODO
+
 unit will always be f64,
 it is up to the canvas on how to scale accordingly,
 to define a bounding box, etc.
 
 Drawings can calculate their total size
-
-
 "#]
 
 pub mod color;

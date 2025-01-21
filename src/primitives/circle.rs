@@ -19,21 +19,14 @@ impl Circle {
 }
 
 impl Primitive for Circle {
-    fn draw_primitive<'c, C>(&'c self, canvas: &'c mut C) -> impl FnMut(DrawStyle<'_>) + 'c
+    fn draw_primitive<'c, C, S>(&'c self, canvas: &'c mut C) -> impl FnMut(S) + 'c
     where
         C: Canvas,
+        S: AsDrawStyle,
     {
-        |style: DrawStyle<'_>| {
+        |style| {
             canvas.circle(style, self.position, self.radius);
         }
-    }
-    fn draw_primitive_boxed<'c>(
-        &'c self,
-        canvas: &'c mut dyn Canvas,
-    ) -> Box<dyn FnMut(DrawStyle<'_>) + 'c> {
-        Box::new(|style: DrawStyle<'_>| {
-            canvas.circle(style, self.position, self.radius);
-        })
     }
 }
 

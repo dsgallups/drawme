@@ -25,14 +25,21 @@ impl<T> Canvas for Dbg<T>
 where
     T: Canvas + ?Sized,
 {
-    fn path(&mut self, style: DrawStyle<'_>, path: &Path) {
-        self.log(format!("style: {:?}, path: {:?}", style, path));
+    fn path<S: AsDrawStyle>(&mut self, style: S, path: &Path) {
+        self.log(format!(
+            "style: {:?}, path: {:?}",
+            DrawStyle::from_style_ref(&style),
+            path
+        ));
         self.inner.path(style, path);
     }
-    fn text(&mut self, style: DrawStyle<'_>, text: &str, font: &FontProps<'_>, iso: Isometry) {
+    fn text<S: AsDrawStyle>(&mut self, style: S, text: &str, font: &FontProps<'_>, iso: Isometry) {
         self.log(format!(
             "style: {:?}, text: {:?}, {:?}, {:?}",
-            style, text, font, iso
+            DrawStyle::from_style_ref(&style),
+            text,
+            font,
+            iso
         ));
         self.inner.text(style, text, font, iso);
     }
@@ -40,15 +47,21 @@ where
         self.log(format!("image: {:?}", src));
         self.inner.image(src);
     }
-    fn circle(&mut self, style: DrawStyle<'_>, point: Point, radius: f64) {
+    fn circle<S: AsDrawStyle>(&mut self, style: S, point: Point, radius: f64) {
         self.log(format!(
             "style: {:?}, circle: {:?}, {:?}",
-            style, point, radius
+            DrawStyle::from_style_ref(&style),
+            point,
+            radius
         ));
         self.inner.circle(style, point, radius);
     }
-    fn rectangle(&mut self, style: DrawStyle<'_>, rectangle: &Rectangle) {
-        self.log(format!("style: {:?}, rectangle: {:?}", style, rectangle));
+    fn rectangle<S: AsDrawStyle>(&mut self, style: S, rectangle: &Rectangle) {
+        self.log(format!(
+            "style: {:?}, rectangle: {:?}",
+            DrawStyle::from_style_ref(&style),
+            rectangle
+        ));
         self.inner.rectangle(style, rectangle);
     }
 }

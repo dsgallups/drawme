@@ -18,35 +18,29 @@ pub trait Primitive {
         Styled { shape: self, style }
     }
 
-    fn draw_with_style<C, S>(&self, style: &S, canvas: &mut C)
+    fn draw_with_style<C, S>(&self, style: S, canvas: &mut C)
     where
         Self: Sized,
         C: Canvas,
-        S: AsDrawStyle + ?Sized,
+        S: AsDrawStyle,
     {
-        self.draw_primitive(canvas)(style.as_draw_style())
+        self.draw_primitive(canvas)(style)
     }
 
-    /// non-dyn function for primitive. Highly recommended to implement this function.
-    fn draw_primitive<'c, C>(&'c self, canvas: &'c mut C) -> impl FnMut(DrawStyle<'_>) + 'c
+    /// Returns a function that will draw onto the canvas with the provided style.
+    fn draw_primitive<'c, C, S>(&'c self, canvas: &'c mut C) -> impl FnMut(S) + 'c
     where
         C: Canvas,
-        Self: Sized,
-    {
-        self.draw_primitive_boxed(canvas)
-    }
+        S: AsDrawStyle,
+        Self: Sized;
 
-    fn draw_dyn_with_style(&self, style: &dyn AsDrawStyle, canvas: &mut dyn Canvas) {
-        self.draw_primitive_boxed(canvas)(style.as_draw_style())
+    /*fn draw_dyn_with_style(&self, style: &dyn AsDrawStyle, canvas: &mut dyn Canvas) {
+        self.draw_primitive_boxed(canvas)(style)
     }
 
     /// Return a function, that when called with a style, will draw to a canvas.
     fn draw_primitive_boxed<'c>(
         &'c self,
         canvas: &'c mut dyn Canvas,
-    ) -> Box<dyn FnMut(DrawStyle<'_>) + 'c>;
-}
-
-pub trait DynPrimitive {
-    fn draw_dyn_primitive(&self, canvas: &mut dyn Canvas) -> Box<dyn FnMut(DrawStyle<'_>)>;
+    ) -> Box<dyn FnMut(&dyn AsDrawStyle) + 'c>;*/
 }

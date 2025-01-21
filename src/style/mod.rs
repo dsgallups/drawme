@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::prelude::*;
 
 mod fill;
@@ -22,21 +20,21 @@ where
     fn draw(&self, canvas: &mut C) {
         // style goes first to set values
         // todo: how to deal with style? Maybe we should implement Draw for all primitives
-        self.shape.draw_primitive(canvas)(self.style.as_draw_style());
+        self.shape.draw_primitive(canvas)(&self.style);
     }
 }
 
 #[derive(Default, Debug)]
 pub struct DrawStyle<'a> {
-    pub fill: Option<Cow<'a, Paint>>,
-    pub stroke: Option<Cow<'a, Paint>>,
+    pub fill: Option<Paint<'a>>,
+    pub stroke: Option<Paint<'a>>,
     pub stroke_width: Option<f64>,
 }
 
 impl<'a> DrawStyle<'a> {
     pub fn from_fill(fill: Fill<'a>) -> DrawStyle<'a> {
         Self {
-            fill: Some(fill.into_cow()),
+            fill: Some(fill.into_paint()),
             stroke: None,
             stroke_width: None,
         }
@@ -45,7 +43,7 @@ impl<'a> DrawStyle<'a> {
     pub fn from_stroke(stroke: StrokeColor<'a>) -> DrawStyle<'a> {
         Self {
             fill: None,
-            stroke: Some(stroke.into_cow()),
+            stroke: Some(stroke.into_paint()),
             stroke_width: None,
         }
     }
@@ -57,12 +55,48 @@ impl<'a> DrawStyle<'a> {
             stroke_width: Some(width),
         }
     }
+
+    pub fn from_style_ref<S: AsDrawStyle>(style: &'a S) -> Self {
+        Self {
+            fill: style.fill(),
+            stroke: style.stroke(),
+            stroke_width: style.stroke_width(),
+        }
+    }
 }
 
 pub trait AsDrawStyle {
-    fn as_draw_style(&self) -> DrawStyle<'_>;
+    fn fill(&self) -> Option<Paint<'_>> {
+        None
+    }
+    fn stroke(&self) -> Option<Paint<'_>> {
+        None
+    }
+    fn stroke_width(&self) -> Option<f64> {
+        None
+    }
+}
 
-    fn into_draw_style<'b>(self) -> DrawStyle<'b>
-    where
-        Self: 'b;
+impl<T: AsDrawStyle + ?Sized> AsDrawStyle for &'_ T {
+    fn fill(&self) -> Option<Paint<'_>> {
+        (*self).fill()
+    }
+    fn stroke(&self) -> Option<Paint<'_>> {
+        (*self).stroke()
+    }
+    fn stroke_width(&self) -> Option<f64> {
+        (*self).stroke_width()
+    }
+}
+
+impl<T: AsDrawStyle + ?Sized> AsDrawStyle for &'_ mut T {
+    fn fill(&self) -> Option<Paint<'_>> {
+        (**self).fill()
+    }
+    fn stroke(&self) -> Option<Paint<'_>> {
+        (**self).stroke()
+    }
+    fn stroke_width(&self) -> Option<f64> {
+        (**self).stroke_width()
+    }
 }
