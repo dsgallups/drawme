@@ -24,6 +24,7 @@ serde = [
 debug = []
 
 [dependencies]
+cosmic-text = "0.12.1"
 fontdb = "0.23.0"
 nalgebra = { version = "0.33", default-features = false, features = ["std"] }
 num-traits = "0.2.19"

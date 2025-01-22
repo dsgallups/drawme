@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use fontdb::{Family, Stretch, Style, Weight};
+use fontdb::{Family, Query, Stretch, Style, Weight};
 use nalgebra::{Rotation2, Scalar};
 
 use crate::{
@@ -75,6 +75,13 @@ impl<'style, 'family, U: Scalar + Copy> TextStyle<'style, 'family, U> {
         self.rotation
     }
 }
+
+impl<'style, 'family, U: Scalar + Copy> TextStyle<'style, 'family, U> {
+    pub fn to_query(&self) -> Query {
+        todo!()
+    }
+}
+
 /*
 #[derive(Clone, PartialEq, Debug)]
 pub enum Family<'a> {

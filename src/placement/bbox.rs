@@ -79,6 +79,13 @@ impl<Unit: Scalar + Copy> BoundingBox<Unit> {
     pub fn dimensions(&self) -> Vector2<Unit> {
         self.dimensions
     }
+
+    pub fn width(&self) -> Unit {
+        self.dimensions.x
+    }
+    pub fn height(&self) -> Unit {
+        self.dimensions.y
+    }
 }
 
 impl<Unit: DrawUnit> BoundingBox<Unit> {

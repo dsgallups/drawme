@@ -1,3 +1,6 @@
+use std::sync::{Arc, LazyLock};
+
+use fontdb::Database;
 use nalgebra::{Point2, Scalar};
 
 use crate::prelude::*;
@@ -8,6 +11,19 @@ pub mod debug;
 pub mod svg;
 #[cfg(feature = "xml")]
 pub mod xml;
+
+pub static FONT_DATABASE: LazyLock<Arc<Database>> = LazyLock::new(|| {
+    let mut db = Database::new();
+
+    db.load_system_fonts();
+    db.set_serif_family("Times New Roman");
+    db.set_sans_serif_family("Arial");
+    db.set_cursive_family("Comic Sans MS");
+    db.set_fantasy_family("Impact");
+    db.set_monospace_family("Courier New");
+
+    Arc::new(db)
+});
 
 pub trait Canvas {
     type Unit: DrawUnit;
@@ -20,7 +36,13 @@ pub trait Canvas {
         font: &FontProps<'_>,
         isometry: Isometry,
     );*/
-    fn text(&mut self, text: &str, style: &TextStyle<'_, '_, Self::Unit>);
+    fn text(&mut self, text: &str, style: &TextStyle<'_, '_, Self::Unit>) {
+        let query = style.to_query();
+        let Some(id) = FONT_DATABASE.query(&query) else {
+            return;
+        };
+    }
+
     fn rectangle<S: AsDrawStyle<Unit = Self::Unit>>(
         &mut self,
         style: S,

@@ -59,14 +59,29 @@ where
 pub trait CommonConsts: ConstOne + ConstZero {
     const TWO: Self;
     const ONE_HUNDO: Self;
+
+    fn to_f32(self) -> f32;
+    fn to_f64(self) -> f64;
 }
 
 impl CommonConsts for f32 {
     const TWO: Self = 2.;
     const ONE_HUNDO: Self = 100.;
+    fn to_f32(self) -> f32 {
+        self
+    }
+    fn to_f64(self) -> f64 {
+        self as f64
+    }
 }
 
 impl CommonConsts for f64 {
     const TWO: Self = 2.;
     const ONE_HUNDO: Self = 100.;
+    fn to_f32(self) -> f32 {
+        self as f32
+    }
+    fn to_f64(self) -> f64 {
+        self as f64
+    }
 }
