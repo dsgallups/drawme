@@ -13,13 +13,14 @@ pub trait Canvas {
     type Unit: DrawUnit;
 
     fn path<S: AsDrawStyle<Unit = Self::Unit>>(&mut self, style: S, path: &Path<Self::Unit>);
-    fn text<S: AsDrawStyle<Unit = Self::Unit>>(
+    /*fn text<S: AsDrawStyle<Unit = Self::Unit>>(
         &mut self,
         style: S,
         text: &str,
         font: &FontProps<'_>,
         isometry: Isometry,
-    );
+    );*/
+    fn text(&mut self, text: &str, style: &TextStyle<'_, '_, Self::Unit>);
     fn rectangle<S: AsDrawStyle<Unit = Self::Unit>>(
         &mut self,
         style: S,

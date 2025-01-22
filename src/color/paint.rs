@@ -39,31 +39,31 @@ impl<Unit: Scalar> Paint<'_, Unit> {
     }
 }
 
-impl From<SolidColor> for Paint<'_> {
+impl<U: Scalar> From<SolidColor> for Paint<'_, U> {
     fn from(value: SolidColor) -> Self {
         Self::Solid(value)
     }
 }
 
-impl From<Gradient> for Paint<'_> {
-    fn from(value: Gradient) -> Self {
+impl<U: Scalar> From<Gradient<U>> for Paint<'_, U> {
+    fn from(value: Gradient<U>) -> Self {
         Paint::Gradient(Cow::Owned(value))
     }
 }
 
-impl<'a> From<&'a Gradient> for Paint<'a> {
-    fn from(value: &'a Gradient) -> Self {
+impl<'a, U: Scalar> From<&'a Gradient<U>> for Paint<'a, U> {
+    fn from(value: &'a Gradient<U>) -> Self {
         Paint::Gradient(Cow::Borrowed(value))
     }
 }
 
-impl From<Rgb> for Paint<'_> {
+impl<U: Scalar> From<Rgb> for Paint<'_, U> {
     fn from(value: Rgb) -> Self {
         Paint::Solid(SolidColor::Opaque(value))
     }
 }
 
-impl From<Rgba> for Paint<'_> {
+impl<U: Scalar> From<Rgba> for Paint<'_, U> {
     fn from(value: Rgba) -> Self {
         Paint::Solid(SolidColor::Alpha(value))
     }

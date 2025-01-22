@@ -36,13 +36,7 @@ where
         ));
         self.inner.path(style, path);
     }
-    fn text<S: AsDrawStyle<Unit = Self::Unit>>(
-        &mut self,
-        style: S,
-        text: &str,
-        font: &FontProps<'_>,
-        iso: Isometry,
-    ) {
+    fn text(&mut self, text: &str, style: &TextStyle<'_, '_, Self::Unit>) {
         self.log(format!(
             "style: {:?}, text: {:?}, {:?}, {:?}",
             DrawStyle::from_style_ref(&style),
