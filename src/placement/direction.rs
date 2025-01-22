@@ -1,8 +1,7 @@
-use std::ops::{Add, Sub};
-
 use nalgebra::Vector2;
-use num_traits::ConstOne;
 use serde::{Deserialize, Serialize};
+
+use crate::prelude::DrawUnit;
 
 /// Direction enum for the placement of the object
 ///
@@ -18,9 +17,9 @@ pub enum Direction {
 
 impl Direction {
     /// Based on the current location and the current direction, increment to the next location by one.
-    pub const fn next_coords<T>(&self, current: Vector2<T>) -> Vector2<T>
+    pub fn next_coords<T>(&self, current: Vector2<T>) -> Vector2<T>
     where
-        T: ConstOne + Add<Output = T> + Sub<Output = T>,
+        T: DrawUnit,
     {
         match self {
             Self::North => Vector2::new(current.x, current.y + T::ONE),

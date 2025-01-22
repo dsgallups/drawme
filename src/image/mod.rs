@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use nalgebra::{Rotation2, Vector2};
+use nalgebra::{Rotation2, Scalar, Vector2};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 use url::Url;
@@ -9,14 +9,14 @@ use url::Url;
 pub struct ImageSource(Url);
 
 #[derive(Debug, PartialEq, Clone, Copy)]
-pub struct ImageProps<Unit = f64> {
+pub struct ImageProps<Unit: Scalar = f64> {
     offset: Vector2<Unit>,
     image_width: Option<Unit>,
     image_height: Option<Unit>,
     rotation: Option<Rotation2<Unit>>,
 }
 
-impl<Unit> ImageProps<Unit> {
+impl<Unit: DrawUnit> ImageProps<Unit> {
     pub fn new(
         offset: impl IntoVector<Unit>,
         image_width_override: Option<Unit>,
@@ -24,7 +24,7 @@ impl<Unit> ImageProps<Unit> {
         rotation: Option<Rotation2<Unit>>,
     ) -> Self {
         Self {
-            offset: offset.into(),
+            offset: offset.into_vector(),
             image_width: image_width_override,
             image_height: image_height_override,
             rotation,
@@ -33,7 +33,7 @@ impl<Unit> ImageProps<Unit> {
 
     pub fn empty() -> Self {
         Self {
-            offset: Vector2::zeroes(),
+            offset: Vector2::zeros(),
             image_width: None,
             image_height: None,
             rotation: None,

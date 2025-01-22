@@ -18,8 +18,12 @@ impl<'a, Unit: Scalar> StrokeColor<'a, Unit> {
     }
 }
 
-impl AsDrawStyle for StrokeColor<'_> {
-    fn stroke(&self) -> Option<Paint<'_>> {
+impl<U> AsDrawStyle for StrokeColor<'_, U>
+where
+    U: Scalar,
+{
+    type Unit = U;
+    fn stroke(&self) -> Option<Paint<'_, U>> {
         Some(self.0.clone_shallow())
     }
 }

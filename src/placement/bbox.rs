@@ -1,15 +1,16 @@
-use nalgebra::Vector2;
-use num_traits::Num;
+use nalgebra::{Scalar, Vector2};
+
+use crate::prelude::DrawUnit;
 
 use super::IntoVector;
 
 #[derive(Debug, Default, Clone, PartialEq)]
-pub struct BoundingBox<Unit = f64> {
+pub struct BoundingBox<Unit: Scalar = f64> {
     offset: Vector2<Unit>,
     dimensions: Vector2<Unit>,
 }
 
-impl<Unit> BoundingBox<Unit> {
+impl<Unit: DrawUnit> BoundingBox<Unit> {
     pub fn new(dimensions: impl IntoVector<Unit>) -> Self {
         Self {
             offset: Vector2::zeros(),
@@ -29,7 +30,7 @@ impl<Unit> BoundingBox<Unit> {
     }
 
     pub fn offset(&self) -> Vector2<Unit> {
-        &self.offset
+        self.offset
     }
 
     pub fn set_bounding_width(&mut self, width: Unit) -> &mut Self {
@@ -46,12 +47,9 @@ impl<Unit> BoundingBox<Unit> {
         self
     }
 
-    pub fn center(&self) -> Vector2<Unit>
-    where
-        Unit: Num + Clone,
-    {
-        let center_x = self.top_left.x.clone() + (self.dimensions.width.clone() / Unit::two());
-        let center_y = self.top_left.y.clone() + (self.dimensions.height.clone() / Unit::two());
+    pub fn center(&self) -> Vector2<Unit> {
+        let center_x = self.offset.x + (self.dimensions.x / Unit::TWO);
+        let center_y = self.offset.y + (self.dimensions.y / Unit::TWO);
 
         (center_x, center_y).into_vector()
     }
@@ -78,8 +76,8 @@ impl<Unit> BoundingBox<Unit> {
 
     pub fn zero() -> Self {
         Self {
-            offset: Vector2::zero(),
-            dimensions: Vector2::zero(),
+            offset: Vector2::zeros(),
+            dimensions: Vector2::zeros(),
         }
     }
 

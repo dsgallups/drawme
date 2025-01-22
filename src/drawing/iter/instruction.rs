@@ -1,6 +1,6 @@
 use nalgebra::Scalar;
 
-use crate::{color::Paint, drawing::InheritedDrawStyle, style::DrawStyle};
+use crate::{color::Paint, style::DrawStyle};
 
 use super::DrawCommand;
 
@@ -11,8 +11,8 @@ pub struct DrawingInstruction<'cmd, 'style, Unit: Scalar> {
     style: DrawStyle<'style, Unit>,
 }
 
-impl<'cmd, 'style, Unit: Scalar> DrawingInstruction<'cmd, 'style, Unit> {
-    pub fn new(command: &'cmd DrawCommand<Unit>, style: InheritedDrawStyle<'style, Unit>) -> Self {
+impl<'cmd, 'style, Unit: Scalar + Copy> DrawingInstruction<'cmd, 'style, Unit> {
+    pub fn new(command: &'cmd DrawCommand<Unit>, style: DrawStyle<'style, Unit>) -> Self {
         Self { command, style }
     }
 
@@ -20,19 +20,19 @@ impl<'cmd, 'style, Unit: Scalar> DrawingInstruction<'cmd, 'style, Unit> {
         self.command
     }
 
-    pub fn style(&self) -> DrawStyle<'style, Unit> {
-        self.style.clone_shallow()
+    pub fn style(&self) -> &DrawStyle<'style, Unit> {
+        &self.style
     }
 
-    pub fn stroke_width(&self) -> Option<Option<&Unit>> {
+    pub fn stroke_width(&self) -> Option<Unit> {
         self.style().stroke_width()
     }
 
-    pub fn stroke_color(&self) -> Option<Option<&Paint>> {
-        self.style().stroke_color()
+    pub fn stroke(&self) -> Option<Paint<'_, Unit>> {
+        self.style().stroke()
     }
 
-    pub fn fill_color(&self) -> Option<Option<&Paint>> {
-        self.style().fill_color()
+    pub fn fill(&self) -> Option<Paint<'_, Unit>> {
+        self.style().fill()
     }
 }

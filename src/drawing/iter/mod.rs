@@ -1,40 +1,39 @@
 use std::{fmt::Debug, vec};
 
-use super::{DrawCommand, DrawStyle, Drawing};
+use super::{DrawCommand, DrawStyle, DrawUnit, Drawing};
 
 mod instruction;
 pub use instruction::*;
-use nalgebra::Scalar;
 
 #[derive(Debug)]
-pub struct DrawingIter<'drawing, 'style, Unit: Scalar> {
+pub struct DrawingIter<'drawing, 'style, Unit: DrawUnit> {
     stack: Vec<(&'drawing Drawing<'drawing, Unit>, DrawStyle<'style, Unit>)>,
     used: Vec<&'drawing Drawing<'drawing, Unit>>,
 }
 
-impl<'drawing, 'style, Unit: Scalar> DrawingIter<'drawing, 'style, Unit>
+impl<'drawing, 'style, U: DrawUnit> DrawingIter<'drawing, 'style, U>
 where
     'drawing: 'style,
 {
-    pub fn new(root: &'drawing Drawing<Unit>) -> Self {
+    pub fn new(root: &'drawing Drawing<U>) -> Self {
         Self {
-            stack: vec![(root, root.style().borrowed())],
+            stack: vec![(root, root.style())],
             used: Vec::with_capacity(root.num_drawings()),
         }
     }
 }
 
-impl<'drawing, 'style, Unit: Scalar> Iterator for DrawingIter<'drawing, 'style, Unit>
+impl<'drawing, 'style, U: DrawUnit> Iterator for DrawingIter<'drawing, 'style, U>
 where
     'drawing: 'style,
 {
-    type Item = DrawingInstruction<'drawing, 'style, Unit>;
+    type Item = DrawingInstruction<'drawing, 'style, U>;
 
     /// This will return drawing command
-    fn next(&mut self) -> Option<DrawingInstruction<'drawing, 'style, Unit>> {
+    fn next(&mut self) -> Option<DrawingInstruction<'drawing, 'style, U>> {
         let (node, parent_style) = self.stack.pop()?;
 
-        let node_style = node.style.borrowed().combine_styles(&parent_style);
+        let node_style = node.style.combine_styles(&parent_style);
 
         for child in node.children.iter().rev() {
             self.stack.push((child, node_style.clone()));

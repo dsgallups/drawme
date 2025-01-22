@@ -12,7 +12,7 @@ pub struct Circle<Unit: Scalar = f64> {
 }
 
 impl<Unit: Scalar> Circle<Unit> {
-    pub fn new(position: impl IntoPoint<Unit>, radius: f64) -> Self {
+    pub fn new(position: impl IntoPoint<Unit>, radius: Unit) -> Self {
         Self {
             position: position.into_point(),
             radius,
@@ -20,8 +20,8 @@ impl<Unit: Scalar> Circle<Unit> {
     }
 }
 
-impl<Unit: Scalar + Clone> Primitive for Circle<Unit> {
-    type Unit = Unit;
+impl<U: DrawUnit> Primitive for Circle<U> {
+    type Unit = U;
     fn draw_primitive<'c, C, S>(&'c self, canvas: &'c mut C) -> impl FnMut(S) + 'c
     where
         C: Canvas<Unit = Self::Unit>,

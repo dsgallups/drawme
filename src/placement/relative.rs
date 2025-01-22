@@ -3,6 +3,8 @@ use num_traits::Float;
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 
+use crate::prelude::DrawUnit;
+
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub struct RelativePosition<Unit = f64> {
     relative_x: RelativeXOrigin,
@@ -22,30 +24,30 @@ impl<Unit> Default for RelativePosition<Unit> {
     }
 }
 
-impl<Unit> RelativePosition<Unit> {
+impl<Unit: DrawUnit> RelativePosition<Unit> {
     pub fn new(
         relative_x: RelativeXOrigin,
-        offset_x: Offset,
+        offset_x: Offset<Unit>,
         relative_y: RelativeYOrigin,
-        offset_y: Offset,
+        offset_y: Offset<Unit>,
     ) -> Self {
         Self {
             relative_x,
-            offset_x: Some(offset_x.into()),
+            offset_x: Some(offset_x),
             relative_y,
-            offset_y: Some(offset_y.into()),
+            offset_y: Some(offset_y),
         }
     }
     pub fn relative_x_origin(&self) -> RelativeXOrigin {
         self.relative_x
     }
-    pub fn offset_x(&self) -> Option<Offset> {
+    pub fn offset_x(&self) -> Option<Offset<Unit>> {
         self.offset_x
     }
     pub fn relative_y_origin(&self) -> RelativeYOrigin {
         self.relative_y
     }
-    pub fn offset_y(&self) -> Option<Offset> {
+    pub fn offset_y(&self) -> Option<Offset<Unit>> {
         self.offset_y
     }
 
@@ -66,17 +68,17 @@ impl<Unit> RelativePosition<Unit> {
             offset_y: None,
         }
     }
-    pub fn with_offset_x(mut self, offset_x: Offset) -> Self {
-        self.offset_x = Some(offset_x.into());
+    pub fn with_offset_x(mut self, offset_x: Offset<Unit>) -> Self {
+        self.offset_x = Some(offset_x);
         self
     }
-    pub fn with_offset_y(mut self, offset_y: Offset) -> Self {
-        self.offset_y = Some(offset_y.into());
+    pub fn with_offset_y(mut self, offset_y: Offset<Unit>) -> Self {
+        self.offset_y = Some(offset_y);
         self
     }
 }
 
-impl<Unit: Float + FromStr> FromStr for RelativePosition<Unit> {
+impl<Unit: DrawUnit + Float + FromStr> FromStr for RelativePosition<Unit> {
     type Err = ();
     /// Valid examples:
     /// - top 75px left 100%
@@ -259,23 +261,25 @@ impl<Unit: Float> Offset<Unit> {
     }
 }
 
-impl<Unit: FromStr + Float> FromStr for Offset<Unit> {
+impl<Unit: DrawUnit + FromStr + Float> FromStr for Offset<Unit> {
     type Err = ();
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
         if s.strip_suffix('%').is_some() {
-            return Ok(Offset::Percent(Unit::from_str(s).map_err(|_| ())? / 100.));
+            return Ok(Offset::Percent(
+                Unit::from_str(s).map_err(|_| ())? / Unit::num(100.),
+            ));
         }
         let pixel = s.parse().map_err(|_| ())?;
         Ok(Offset::Scalar(pixel))
     }
 }
 
-impl<Unit: fmt::Display + Float> fmt::Display for Offset<Unit> {
+impl<Unit: DrawUnit + fmt::Display + Float> fmt::Display for Offset<Unit> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Offset::Percent(p) => {
-                write!(f, "{}%", p * 100)
+                write!(f, "{}%", *p * Unit::num(100.))
             }
             Offset::Scalar(p) => {
                 write!(f, "{}", p)

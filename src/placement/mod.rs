@@ -12,23 +12,25 @@ pub use bbox::*;
 
 use nalgebra::{Point2, Rotation2, Scalar, Vector2};
 
+use crate::prelude::DrawUnit;
+
 //pub type Point = Point2<f64>;
 //pub type Vector = Vector2<f64>;
 //pub type Rotation = Rotation2<f64>;
 //pub type Isometry = Isometry2<f64>;
 //pub type Similarity = Similarity2<f64>;
 
-pub trait PointExt<Unit: Scalar> {
+pub trait PointExt<Unit: DrawUnit> {
     fn rotate_around(&self, rotation: &Rotation2<Unit>, pivot: &Point2<Unit>) -> Point2<Unit>;
 }
 
-impl<Unit: Scalar> PointExt<Unit> for Point2<Unit> {
+impl<Unit: DrawUnit> PointExt<Unit> for Point2<Unit> {
     fn rotate_around(&self, rotation: &Rotation2<Unit>, pivot: &Point2<Unit>) -> Point2<Unit> {
         let translated_point = self - pivot;
 
         let rotated_point = rotation * translated_point;
 
-        Point2::from(rotated_point + pivot.coords)
+        Point2::from(rotated_point + pivot.coords.clone())
     }
 }
 

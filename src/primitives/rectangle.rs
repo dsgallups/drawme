@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 
-use nalgebra::{Point2, Rotation2, Scalar, Vector2};
-
 use crate::prelude::*;
+use nalgebra::{Point2, Rotation2, Scalar, Vector2};
 
 /// Rectangle is a simple rectangle
 ///
@@ -19,7 +18,11 @@ pub struct Rectangle<Unit: Scalar = f64> {
     rot: Rotation2<Unit>,
 }
 
-impl<Unit: Scalar> Rectangle<Unit> {
+impl<Unit: DrawUnit> Rectangle<Unit>
+// where
+//     Unit: SimdComplexField + NumCast + Copy,
+//     Unit::SimdRealField: NumCast,
+{
     pub fn new(closest: impl IntoPoint<Unit>, farthest: impl IntoPoint<Unit>) -> Self {
         Self {
             top_left: closest.into_point(),
@@ -136,7 +139,7 @@ impl<Unit: Scalar> Rectangle<Unit> {
     }
 
     pub fn from_dimensions_and_center(dimensions: Vector2<Unit>, center: Point2<Unit>) -> Self {
-        let half = dimensions.scale(0.5);
+        let half = dimensions.scale(Unit::rf(0.5));
 
         let closest = center - half;
 
@@ -201,7 +204,7 @@ impl<Unit: Scalar> Rectangle<Unit> {
     }
 
     pub fn relative_center(&self) -> Vector2<Unit> {
-        Vector2::new(self.width() / 2., self.height() / 2.)
+        Vector2::new(self.width() / Unit::num(2.), self.height() / Unit::num(2.))
     }
 
     fn height(&self) -> Unit {

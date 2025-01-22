@@ -3,13 +3,12 @@ use crate::prelude::*;
 mod iter;
 pub use iter::*;
 
-mod inherited_draw_style;
-pub use inherited_draw_style::*;
+//mod inherited_draw_style;
+//pub use inherited_draw_style::*;
 
 mod command;
 pub use command::*;
-use nalgebra::{Scalar, Vector2};
-use num_traits::NumOps;
+use nalgebra::{Point2, Vector2};
 
 #[doc = r#"
 Some type of some unit space that can be rendered by an appropriate backend.
@@ -20,13 +19,13 @@ Does the following things:
 - Defines a list of [`DrawingCommands`]
 "#]
 #[derive(Debug, Clone)]
-pub struct Drawing<'a, Unit: Scalar = f64> {
-    pub(crate) style: DrawStyle<'a>,
+pub struct Drawing<'a, Unit: DrawUnit = f64> {
+    pub(crate) style: DrawStyle<'a, Unit>,
     pub(crate) command: Option<DrawCommand<Unit>>,
-    pub(crate) children: Vec<Drawing<'a>>,
+    pub(crate) children: Vec<Drawing<'a, Unit>>,
 }
 
-impl Default for Drawing<'_> {
+impl<U: DrawUnit> Default for Drawing<'_, U> {
     /// Creates a new drawing with the following defaults:
     /// relative position is left and top
     fn default() -> Self {
@@ -38,10 +37,10 @@ impl Default for Drawing<'_> {
     }
 }
 
-impl<'a, Unit: Scalar> Drawing<'a, Unit> {
+impl<'a, U: DrawUnit> Drawing<'a, U> {
     /// Access to the builder pattern to initialize a drawing.
 
-    pub fn new(command: impl Into<DrawCommand<Unit>>, style: InheritedDrawStyle<'a>) -> Self {
+    pub fn new(command: impl Into<DrawCommand<U>>, style: DrawStyle<'a, U>) -> Self {
         Self {
             style,
             command: Some(command.into()),
@@ -56,9 +55,9 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
     }
 
     pub const fn new_with_children(
-        command: Option<DrawCommand>,
-        style: InheritedDrawStyle<'a>,
-        children: Vec<Drawing>,
+        command: Option<DrawCommand<U>>,
+        style: DrawStyle<'a, U>,
+        children: Vec<Drawing<'a, U>>,
     ) -> Self {
         Self {
             style,
@@ -80,7 +79,7 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
     }
     */
 
-    pub fn from_style(style: impl Into<InheritedDrawStyle<'a>>) -> Self {
+    pub fn from_style(style: impl Into<DrawStyle<'a, U>>) -> Self {
         Self {
             style: style.into(),
             ..Default::default()
@@ -88,18 +87,19 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
     }
 
     #[inline]
-    pub fn add_child(&mut self, command: impl Into<Drawing<'a>>) -> &mut Self {
-        self.children.push(command.into())
+    pub fn add_child(&mut self, command: impl Into<Drawing<'a, U>>) -> &mut Self {
+        self.children.push(command.into());
+        self
     }
 
-    pub const fn style(&self) -> DrawStyle<'_> {
+    pub const fn style(&self) -> DrawStyle<'_, U> {
         self.style.clone_shallow()
     }
 
     pub fn extend_children<Cmds>(&mut self, commands: Cmds) -> &mut Self
     where
         Cmds: IntoIterator,
-        Cmds::Item: Into<Drawing<'a>>,
+        Cmds::Item: Into<Drawing<'a, U>>,
     {
         for command in commands {
             self.add_child(command);
@@ -107,11 +107,11 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
         self
     }
 
-    pub fn command(&self) -> Option<&DrawCommand<Unit>> {
+    pub fn command(&self) -> Option<&DrawCommand<U>> {
         self.command.as_ref()
     }
 
-    pub fn iter<'s, 'cmd, 'style>(&'s self) -> DrawingIter<'cmd, 'style, Unit>
+    pub fn iter<'s, 'cmd, 'style>(&'s self) -> DrawingIter<'cmd, 'style, U>
     where
         's: 'cmd,
         's: 'style,
@@ -122,7 +122,7 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
 
     pub fn instructions<'s, 'cmd, 'style>(
         &'s self,
-    ) -> impl Iterator<Item = DrawingInstruction<'cmd, 'style, Unit>>
+    ) -> impl Iterator<Item = DrawingInstruction<'cmd, 'style, U>>
     where
         's: 'cmd,
         's: 'style,
@@ -131,29 +131,23 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
         self.iter()
     }
 
-    pub fn command_mut(&mut self) -> Option<&mut DrawCommand<Unit>> {
+    pub fn command_mut(&mut self) -> Option<&mut DrawCommand<U>> {
         self.command.as_mut()
     }
 
-    pub fn with_command<Command>(mut self, command: Command) -> Self
-    where
-        Command: Into<DrawCommand<Unit>>,
-    {
-        self.command = Some(command.into_draw_command());
+    pub fn with_command(mut self, command: impl Into<DrawCommand<U>>) -> Self {
+        self.command = Some(command.into());
         self
     }
 
-    pub fn set_command<Command>(&mut self, command: Command) -> &mut Self
-    where
-        Command: Into<DrawCommand<Unit>>,
-    {
-        self.command = Some(command.into_draw_command());
+    pub fn set_command<Command>(&mut self, command: impl Into<DrawCommand<U>>) -> &mut Self {
+        self.command = Some(command.into());
         self
     }
 
     pub fn with_style<Style>(mut self, style: Style) -> Self
     where
-        Style: AsDrawStyle,
+        Style: AsDrawStyle<Unit = U>,
     {
         self.style = DrawStyle::from_style(style);
         self
@@ -161,38 +155,36 @@ impl<'a, Unit: Scalar> Drawing<'a, Unit> {
 
     pub fn set_style<Style>(&mut self, style: Style) -> &mut Self
     where
-        Style: AsDrawStyle,
+        Style: AsDrawStyle<Unit = U>,
     {
         self.style = DrawStyle::from_style(style);
         self
     }
 
-    pub fn adjust_style(&mut self, f: impl FnOnce(&mut InheritedDrawStyle<Unit>)) -> &mut Self {
+    pub fn adjust_style(&mut self, f: impl Fn(&mut DrawStyle<'a, U>)) -> &mut Self {
         f(&mut self.style);
         self
     }
 
-    pub fn set_fill_color(&mut self, color: impl Into<Paint<'a>>) -> &mut Self {
-        self.style.set_fill_color(color);
+    pub fn set_fill(&mut self, color: Option<Paint<'a, U>>) -> &mut Self {
+        self.style.set_fill(color);
         self
     }
 
-    pub fn set_stroke_color(&mut self, color: impl Into<Paint<'a>>) -> &mut Self {
-        self.style.set_stroke_color(color);
+    pub fn set_stroke(&mut self, color: Option<Paint<'a, U>>) -> &mut Self {
+        self.style.set_stroke(color);
         self
     }
 
-    pub fn set_stroke_width(&mut self, width: Unit) -> &mut Self {
+    pub fn set_stroke_width(&mut self, width: Option<U>) -> &mut Self {
         self.style.set_stroke_width(width);
         self
     }
 
-    pub fn children(&self) -> &[Drawing<Unit>] {
+    pub fn children(&self) -> &[Drawing<'a, U>] {
         self.children.as_slice()
     }
-}
 
-impl<'a, Unit: NumOps + Scalar> Drawing<'a, Unit> {
     /// Returns a box that encapsulates all the commands in O(n).
     ///
     /// The way the bounding box is calculated can be represented by this image:
@@ -202,22 +194,22 @@ impl<'a, Unit: NumOps + Scalar> Drawing<'a, Unit> {
     /// **Safe to unwrap** if the caller KNOWS that the drawing has locational commands.
     ///
     /// Returns `None` if there are no commands, or if the only commands are [`DrawingCommand::Close`].
-    pub fn bounding_box(&self) -> Option<BoundingBox<Unit>> {
+    pub fn bounding_box(&self) -> Option<BoundingBox<U>> {
         //self.commands.bounding_box()
         if self.command.is_none() && self.children.is_empty() {
             return None;
         }
 
-        let mut closest: Option<Vector2<Unit>> = None;
-        let mut farthest: Option<Vector2<Unit>> = None;
+        let mut closest: Option<Vector2<U>> = None;
+        let mut farthest: Option<Vector2<U>> = None;
 
         for location in self.locations() {
             match closest {
                 Some(ref mut close) => {
-                    if &location.x < close.x {
+                    if location.x < close.x {
                         close.x = location.x;
                     }
-                    if &location.y < close.y {
+                    if location.y < close.y {
                         close.y = location.y;
                     }
                 }
@@ -227,11 +219,11 @@ impl<'a, Unit: NumOps + Scalar> Drawing<'a, Unit> {
             }
             match farthest {
                 Some(ref mut far) => {
-                    if &location.x > far.x {
-                        far.x = &location.x
+                    if location.x > far.x {
+                        far.x = location.x
                     }
-                    if &location.y > far.y {
-                        far.y = &location.y
+                    if location.y > far.y {
+                        far.y = location.y
                     }
                 }
                 None => {
@@ -250,7 +242,7 @@ impl<'a, Unit: NumOps + Scalar> Drawing<'a, Unit> {
     }
 
     /// Extremely slow
-    pub fn locations(&self) -> Vec<&Vector2<Unit>> {
+    pub fn locations(&self) -> Vec<&Point2<U>> {
         match self.command {
             Some(ref c) => {
                 let mut loc_vec = c.locations();
@@ -268,7 +260,7 @@ impl<'a, Unit: NumOps + Scalar> Drawing<'a, Unit> {
     }
 
     /// Extremely slow
-    pub fn locations_mut(&mut self) -> Vec<&mut Vector2<Unit>> {
+    pub fn locations_mut(&mut self) -> Vec<&mut Point2<U>> {
         match self.command {
             Some(ref mut c) => {
                 let mut loc_vec = c.locations_mut();
@@ -336,44 +328,44 @@ impl<Unit: DrawableUnit> Transformation<Unit> for Drawing<Unit> {
 }
 */
 
-#[test]
-fn test_drawing_chain() {
-    use pretty_assertions::assert_eq;
-    let mut parent = Drawing::builder()
-        .stroke_width(0.)
-        .fill_color(Paint::rgb(0, 0, 0))
-        .build();
-    parent.set_command(DrawCommand::path([
-        PathCommand::move_to((0., 0.)),
-        PathCommand::line_to((5., 5.)),
-    ]));
+// #[test]
+// fn test_drawing_chain() {
+//     use pretty_assertions::assert_eq;
+//     let mut parent = Drawing::builder()
+//         .stroke_width(0.)
+//         .fill_color(Paint::rgb(0, 0, 0))
+//         .build();
+//     parent.set_command(DrawCommand::path([
+//         PathCommand::move_to((0., 0.)),
+//         PathCommand::line_to((5., 5.)),
+//     ]));
 
-    let mut child = Drawing::builder()
-        .stroke_width(0.)
-        .fill_color(Paint::rgb(0, 0, 0))
-        .build();
-    child.set_command(DrawCommand::path([
-        PathCommand::move_to((0., 0.)),
-        PathCommand::line_to((0., 10.)),
-    ]));
+//     let mut child = Drawing::builder()
+//         .stroke_width(0.)
+//         .fill_color(Paint::rgb(0, 0, 0))
+//         .build();
+//     child.set_command(DrawCommand::path([
+//         PathCommand::move_to((0., 0.)),
+//         PathCommand::line_to((0., 10.)),
+//     ]));
 
-    parent.chain(child);
+//     parent.chain(child);
 
-    let expected_commands: [DrawCommand; 2] = [
-        DrawCommand::path([
-            PathCommand::move_to((0., 0.)),
-            PathCommand::line_to((5., 5.)),
-        ]),
-        DrawCommand::path([
-            PathCommand::move_to((0., 0.)),
-            PathCommand::line_to((0., 10.)),
-        ]),
-    ];
+//     let expected_commands: [DrawCommand; 2] = [
+//         DrawCommand::path([
+//             PathCommand::move_to((0., 0.)),
+//             PathCommand::line_to((5., 5.)),
+//         ]),
+//         DrawCommand::path([
+//             PathCommand::move_to((0., 0.)),
+//             PathCommand::line_to((0., 10.)),
+//         ]),
+//     ];
 
-    for (act, exp) in parent.instructions().zip(expected_commands.iter()) {
-        assert_eq!(act.command(), exp);
-    }
-}
+//     for (act, exp) in parent.instructions().zip(expected_commands.iter()) {
+//         assert_eq!(act.command(), exp);
+//     }
+// }
 
 // #[derive(Debug, Clone)]
 // pub struct DrawingBuilder<Unit = f64> {

@@ -18,8 +18,12 @@ impl<'a, Unit: Scalar> Fill<'a, Unit> {
     }
 }
 
-impl AsDrawStyle for Fill<'_> {
-    fn fill(&self) -> Option<Paint<'_>> {
+impl<U> AsDrawStyle for Fill<'_, U>
+where
+    U: Scalar,
+{
+    type Unit = U;
+    fn fill(&self) -> Option<Paint<'_, U>> {
         Some(self.0.clone_shallow())
     }
 }

@@ -1,4 +1,4 @@
-use nalgebra::{Point2, Rotation2, Scalar, Vector2};
+use nalgebra::{Point2, Rotation2, Scalar};
 
 use crate::prelude::*;
 
@@ -22,7 +22,7 @@ path-like commands that have not been issued a [Close](DrawingCommand::Close).
 "#]
 #[derive(Debug, PartialEq, Clone)]
 pub enum DrawCommand<Unit: Scalar = f64> {
-    Path(Path),
+    Path(Path<Unit>),
     /// An operation that calls for the drawing of a circle.
     ///
     /// The style property of this command should utilize the same rules as [`Close`](DrawingCommand::Close).
@@ -30,11 +30,18 @@ pub enum DrawCommand<Unit: Scalar = f64> {
         position: Point2<Unit>,
         radius: Unit,
     },
+    // Text {
+    //         text: String,
+    //         start: Point2<Unit>,
+    //         end: Point2<Unit>,
+    //         font: RawFontProps,
+    //         rotation: Option<Rotation2<Unit>>,
+    //     },
     Text {
         text: String,
         start: Point2<Unit>,
         end: Point2<Unit>,
-        font: RawFontProps,
+        font: String,
         rotation: Option<Rotation2<Unit>>,
     },
     Image {
@@ -43,28 +50,28 @@ pub enum DrawCommand<Unit: Scalar = f64> {
     },
 }
 
-impl DrawCommand {
-    pub fn path(commands: impl Into<Path>) -> Self {
+impl<U: Scalar> DrawCommand<U> {
+    pub fn path(commands: impl Into<Path<U>>) -> Self {
         Self::Path(commands.into())
     }
 
-    pub fn text(
-        text: impl Into<String>,
-        start: Option<Vector2<f64>>,
-        end: Option<Vector2<f64>>,
-        props: RawFontProps,
-        rotation: Option<Rotation2<f64>>,
-    ) -> Self {
-        Self::Text {
-            text: text.into(),
-            start: start.into(),
-            end: end.into(),
-            font: props,
-            rotation,
-        }
-    }
+    // pub fn text(
+    //     text: impl Into<String>,
+    //     start: Option<Vector2<f64>>,
+    //     end: Option<Vector2<f64>>,
+    //     props: RawFontProps,
+    //     rotation: Option<Rotation2<f64>>,
+    // ) -> Self {
+    //     Self::Text {
+    //         text: text.into(),
+    //         start: start.into(),
+    //         end: end.into(),
+    //         font: props,
+    //         rotation,
+    //     }
+    // }
 
-    pub fn circle(position: impl IntoPoint, radius: f64) -> Self {
+    pub fn circle(position: impl IntoPoint<U>, radius: U) -> Self {
         Self::Circle {
             position: position.into_point(),
             radius,
@@ -78,7 +85,7 @@ impl DrawCommand {
         }
     }
 
-    pub fn locations(&self) -> Vec<Vector2<f64>> {
+    pub fn locations(&self) -> Vec<&Point2<U>> {
         use DrawCommand::*;
         match self {
             Path(commands) => commands.locations(),
@@ -93,10 +100,11 @@ impl DrawCommand {
                 font: _,
                 rotation: _,
             } => vec![start, end],
-            Image { src: _, props } => vec![props.offset()],
+            // Image { src: _, props } => vec![props.offset()],
+            Image { .. } => todo!(),
         }
     }
-    pub fn locations_mut(&mut self) -> Vec<&mut Vector2<f64>> {
+    pub fn locations_mut(&mut self) -> Vec<&mut Point2<U>> {
         use DrawCommand::*;
         match self {
             Path(commands) => commands.locations_mut(),
@@ -111,7 +119,8 @@ impl DrawCommand {
                 font: _,
                 rotation: _,
             } => vec![start, end],
-            Image { src: _, props } => vec![props.offset_mut()],
+            // Image { src: _, props } => vec![props.offset_mut()],
+            Image { .. } => todo!(),
         }
     }
 
