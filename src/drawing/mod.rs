@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use std::ops::Neg;
 
 mod iter;
 pub use iter::*;
@@ -9,6 +8,8 @@ pub use inherited_draw_style::*;
 
 mod command;
 pub use command::*;
+use nalgebra::{Scalar, Vector2};
+use num_traits::NumOps;
 
 #[doc = r#"
 Some type of some unit space that can be rendered by an appropriate backend.
@@ -19,8 +20,8 @@ Does the following things:
 - Defines a list of [`DrawingCommands`]
 "#]
 #[derive(Debug, Clone)]
-pub struct Drawing<'a, Unit = f64> {
-    pub(crate) style: InheritedDrawStyle<'a>,
+pub struct Drawing<'a, Unit: Scalar = f64> {
+    pub(crate) style: DrawStyle<'a>,
     pub(crate) command: Option<DrawCommand<Unit>>,
     pub(crate) children: Vec<Drawing<'a>>,
 }
@@ -30,18 +31,15 @@ impl Default for Drawing<'_> {
     /// relative position is left and top
     fn default() -> Self {
         Self {
-            style: InheritedDrawStyle::default(),
+            style: DrawStyle::default(),
             command: None,
             children: Vec::new(),
         }
     }
 }
 
-impl<'a, Unit> Drawing<'a, Unit> {
+impl<'a, Unit: Scalar> Drawing<'a, Unit> {
     /// Access to the builder pattern to initialize a drawing.
-    pub fn builder() -> DrawingBuilder {
-        DrawingBuilder::new()
-    }
 
     pub fn new(command: impl Into<DrawCommand<Unit>>, style: InheritedDrawStyle<'a>) -> Self {
         Self {
@@ -94,7 +92,7 @@ impl<'a, Unit> Drawing<'a, Unit> {
         self.children.push(command.into())
     }
 
-    pub const fn style(&self) -> InheritedDrawStyle<'_> {
+    pub const fn style(&self) -> DrawStyle<'_> {
         self.style.clone_shallow()
     }
 
@@ -139,7 +137,7 @@ impl<'a, Unit> Drawing<'a, Unit> {
 
     pub fn with_command<Command>(mut self, command: Command) -> Self
     where
-        Command: DrawableCommand<DrawUnit = Unit>,
+        Command: Into<DrawCommand<Unit>>,
     {
         self.command = Some(command.into_draw_command());
         self
@@ -147,7 +145,7 @@ impl<'a, Unit> Drawing<'a, Unit> {
 
     pub fn set_command<Command>(&mut self, command: Command) -> &mut Self
     where
-        Command: DrawableCommand<DrawUnit = Unit>,
+        Command: Into<DrawCommand<Unit>>,
     {
         self.command = Some(command.into_draw_command());
         self
@@ -155,19 +153,17 @@ impl<'a, Unit> Drawing<'a, Unit> {
 
     pub fn with_style<Style>(mut self, style: Style) -> Self
     where
-        Style: DrawableStyle,
-        Unit: From<Style::DrawUnit>,
+        Style: AsDrawStyle,
     {
-        self.style = style.into_draw_style();
+        self.style = DrawStyle::from_style(style);
         self
     }
 
     pub fn set_style<Style>(&mut self, style: Style) -> &mut Self
     where
-        Style: DrawableStyle,
-        Unit: From<Style::DrawUnit>,
+        Style: AsDrawStyle,
     {
-        self.style = style.into_draw_style();
+        self.style = DrawStyle::from_style(style);
         self
     }
 
@@ -176,12 +172,12 @@ impl<'a, Unit> Drawing<'a, Unit> {
         self
     }
 
-    pub fn set_fill_color(&mut self, color: impl Into<Paint>) -> &mut Self {
+    pub fn set_fill_color(&mut self, color: impl Into<Paint<'a>>) -> &mut Self {
         self.style.set_fill_color(color);
         self
     }
 
-    pub fn set_stroke_color(&mut self, color: impl Into<Paint>) -> &mut Self {
+    pub fn set_stroke_color(&mut self, color: impl Into<Paint<'a>>) -> &mut Self {
         self.style.set_stroke_color(color);
         self
     }
@@ -194,21 +190,9 @@ impl<'a, Unit> Drawing<'a, Unit> {
     pub fn children(&self) -> &[Drawing<Unit>] {
         self.children.as_slice()
     }
-
-    pub fn convert<NewUnit: From<Unit>>(self) -> Drawing<NewUnit> {
-        let style = self.style.convert();
-        let command = self.command.map(|c| c.convert());
-        let children = self.children.into_iter().map(|c| c.convert()).collect();
-
-        Drawing {
-            style,
-            command,
-            children,
-        }
-    }
 }
 
-impl<Unit: DrawableUnit> Drawing<Unit> {
+impl<'a, Unit: NumOps + Scalar> Drawing<'a, Unit> {
     /// Returns a box that encapsulates all the commands in O(n).
     ///
     /// The way the bounding box is calculated can be represented by this image:
@@ -218,31 +202,27 @@ impl<Unit: DrawableUnit> Drawing<Unit> {
     /// **Safe to unwrap** if the caller KNOWS that the drawing has locational commands.
     ///
     /// Returns `None` if there are no commands, or if the only commands are [`DrawingCommand::Close`].
-    #[embed_doc_image("bbox_overview", "readme/bbox_overview.jpg")]
     pub fn bounding_box(&self) -> Option<BoundingBox<Unit>> {
         //self.commands.bounding_box()
         if self.command.is_none() && self.children.is_empty() {
             return None;
         }
 
-        let mut closest: Option<Vec2<&Unit>> = None;
-        let mut farthest: Option<Vec2<&Unit>> = None;
+        let mut closest: Option<Vector2<Unit>> = None;
+        let mut farthest: Option<Vector2<Unit>> = None;
 
         for location in self.locations() {
             match closest {
                 Some(ref mut close) => {
                     if &location.x < close.x {
-                        close.x = &location.x;
+                        close.x = location.x;
                     }
                     if &location.y < close.y {
-                        close.y = &location.y;
+                        close.y = location.y;
                     }
                 }
                 None => {
-                    closest = Some(Vec2 {
-                        x: &location.x,
-                        y: &location.y,
-                    })
+                    closest = Some(Vector2::new(location.x, location.y));
                 }
             }
             match farthest {
@@ -255,31 +235,22 @@ impl<Unit: DrawableUnit> Drawing<Unit> {
                     }
                 }
                 None => {
-                    farthest = Some(Vec2 {
-                        x: &location.x,
-                        y: &location.y,
-                    })
+                    farthest = Some(Vector2::new(location.x, location.y));
                 }
             }
         }
 
         let (closest, farthest) = (closest?, farthest?);
 
-        let offset = Vec2 {
-            x: closest.x.clone(),
-            y: closest.y.clone(),
-        };
+        let offset = Vector2::new(closest.x, closest.y);
 
-        let dimensions = Dimensions {
-            width: farthest.x.clone() - offset.x.clone(),
-            height: farthest.y.clone() - offset.y.clone(),
-        };
+        let dimensions = Vector2::new(farthest.x - offset.x, farthest.y - offset.y);
 
         Some(BoundingBox::new_with_offset(offset, dimensions))
     }
 
     /// Extremely slow
-    pub fn locations(&self) -> Vec<&Vec2<Unit>> {
+    pub fn locations(&self) -> Vec<&Vector2<Unit>> {
         match self.command {
             Some(ref c) => {
                 let mut loc_vec = c.locations();
@@ -297,7 +268,7 @@ impl<Unit: DrawableUnit> Drawing<Unit> {
     }
 
     /// Extremely slow
-    pub fn locations_mut(&mut self) -> Vec<&mut Vec2<Unit>> {
+    pub fn locations_mut(&mut self) -> Vec<&mut Vector2<Unit>> {
         match self.command {
             Some(ref mut c) => {
                 let mut loc_vec = c.locations_mut();
@@ -318,7 +289,7 @@ impl<Unit: DrawableUnit> Drawing<Unit> {
         }
     }
 
-    /// If one has drawn the drawing where x is not the right, and y is not down, this will reorient the drawing to respect the axes.
+    /*/// If one has drawn the drawing where x is not the right, and y is not down, this will reorient the drawing to respect the axes.
     pub fn reorient(
         &mut self,
         current_orientation: &Axes,
@@ -334,9 +305,9 @@ impl<Unit: DrawableUnit> Drawing<Unit> {
             child.reorient(current_orientation, total_dimensions);
         }
         self
-    }
+    }*/
 }
-
+/*
 impl<Unit: DrawableUnit> Transformation<Unit> for Drawing<Unit> {
     fn rotate(&mut self, rotation: &Rotation) {
         if let Some(command) = self.command.as_mut() {
@@ -346,7 +317,7 @@ impl<Unit: DrawableUnit> Transformation<Unit> for Drawing<Unit> {
             child.rotate(rotation);
         }
     }
-    fn rotate_around(&mut self, rotation: &Rotation, relative_to: &Vec2<Unit>) {
+    fn rotate_around(&mut self, rotation: &Rotation, relative_to: &Vector2<Unit>) {
         if let Some(command) = self.command.as_mut() {
             command.rotate_around(rotation, relative_to);
         }
@@ -354,7 +325,7 @@ impl<Unit: DrawableUnit> Transformation<Unit> for Drawing<Unit> {
             child.rotate_around(rotation, relative_to);
         }
     }
-    fn translate(&mut self, point: &Vec2<Unit>) {
+    fn translate(&mut self, point: &Vector2<Unit>) {
         if let Some(command) = self.command.as_mut() {
             command.translate(point);
         }
@@ -363,6 +334,7 @@ impl<Unit: DrawableUnit> Transformation<Unit> for Drawing<Unit> {
         }
     }
 }
+*/
 
 #[test]
 fn test_drawing_chain() {
@@ -403,124 +375,124 @@ fn test_drawing_chain() {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct DrawingBuilder<Unit = f64> {
-    style: Option<InheritedDrawStyle<Unit>>,
-}
+// #[derive(Debug, Clone)]
+// pub struct DrawingBuilder<Unit = f64> {
+//     style: Option<InheritedDrawStyle<Unit>>,
+// }
 
-impl<Unit> Default for DrawingBuilder<Unit> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+// impl<Unit> Default for DrawingBuilder<Unit> {
+//     fn default() -> Self {
+//         Self::new()
+//     }
+// }
 
-impl<Unit> DrawingBuilder<Unit> {
-    pub fn new() -> Self {
-        Self { style: None }
-    }
+// impl<Unit> DrawingBuilder<Unit> {
+//     pub fn new() -> Self {
+//         Self { style: None }
+//     }
 
-    pub fn set_style(mut self, style: Option<InheritedDrawStyle<Unit>>) -> Self {
-        self.style = style;
-        self
-    }
+//     pub fn set_style(mut self, style: Option<InheritedDrawStyle<Unit>>) -> Self {
+//         self.style = style;
+//         self
+//     }
 
-    pub fn stroke_width(mut self, width: Unit) -> Self {
-        match self.style {
-            Some(ref mut style) => {
-                style.set_stroke_width(width);
-            }
-            None => {
-                let mut style = InheritedDrawStyle::default();
-                style.set_stroke_width(width);
-                self.style = Some(style);
-            }
-        }
+//     pub fn stroke_width(mut self, width: Unit) -> Self {
+//         match self.style {
+//             Some(ref mut style) => {
+//                 style.set_stroke_width(width);
+//             }
+//             None => {
+//                 let mut style = InheritedDrawStyle::default();
+//                 style.set_stroke_width(width);
+//                 self.style = Some(style);
+//             }
+//         }
 
-        self
-    }
+//         self
+//     }
 
-    pub fn set_stroke_width(mut self, width: Option<Unit>) -> Self {
-        match self.style {
-            Some(ref mut style) => {
-                style.stroke_width = Some(width);
-            }
-            None => {
-                let style = InheritedDrawStyle {
-                    stroke_width: Some(width),
-                    ..Default::default()
-                };
-                self.style = Some(style);
-            }
-        }
-        self
-    }
+//     pub fn set_stroke_width(mut self, width: Option<Unit>) -> Self {
+//         match self.style {
+//             Some(ref mut style) => {
+//                 style.stroke_width = Some(width);
+//             }
+//             None => {
+//                 let style = InheritedDrawStyle {
+//                     stroke_width: Some(width),
+//                     ..Default::default()
+//                 };
+//                 self.style = Some(style);
+//             }
+//         }
+//         self
+//     }
 
-    pub fn stroke_color(mut self, color: impl Into<Paint>) -> Self {
-        match self.style {
-            Some(ref mut style) => {
-                style.set_stroke_color(color);
-            }
-            None => {
-                let mut style = InheritedDrawStyle::default();
-                style.set_stroke_color(color);
-                self.style = Some(style);
-            }
-        }
+//     pub fn stroke_color(mut self, color: impl Into<Paint<'_>>) -> Self {
+//         match self.style {
+//             Some(ref mut style) => {
+//                 style.set_stroke_color(color);
+//             }
+//             None => {
+//                 let mut style = InheritedDrawStyle::default();
+//                 style.set_stroke_color(color);
+//                 self.style = Some(style);
+//             }
+//         }
 
-        self
-    }
+//         self
+//     }
 
-    pub fn set_stroke_color(mut self, color: Option<Paint>) -> Self {
-        match self.style {
-            Some(ref mut style) => {
-                style.stroke_color = Some(color);
-            }
-            None => {
-                let style = InheritedDrawStyle {
-                    stroke_color: Some(color),
-                    ..Default::default()
-                };
-                self.style = Some(style);
-            }
-        }
-        self
-    }
+//     pub fn set_stroke_color(mut self, color: Option<Paint>) -> Self {
+//         match self.style {
+//             Some(ref mut style) => {
+//                 style.stroke_color = Some(color);
+//             }
+//             None => {
+//                 let style = InheritedDrawStyle {
+//                     stroke_color: Some(color),
+//                     ..Default::default()
+//                 };
+//                 self.style = Some(style);
+//             }
+//         }
+//         self
+//     }
 
-    pub fn fill_color(mut self, color: impl Into<Paint>) -> Self {
-        match self.style {
-            Some(ref mut style) => {
-                style.set_fill_color(color);
-            }
-            None => {
-                let mut style = InheritedDrawStyle::default();
-                style.set_fill_color(color);
-                self.style = Some(style);
-            }
-        }
-        self
-    }
+//     pub fn fill_color(mut self, color: impl Into<Paint>) -> Self {
+//         match self.style {
+//             Some(ref mut style) => {
+//                 style.set_fill_color(color);
+//             }
+//             None => {
+//                 let mut style = InheritedDrawStyle::default();
+//                 style.set_fill_color(color);
+//                 self.style = Some(style);
+//             }
+//         }
+//         self
+//     }
 
-    pub fn set_fill_color(mut self, color: Option<Paint>) -> Self {
-        match self.style {
-            Some(ref mut style) => {
-                style.fill_color = Some(color);
-            }
-            None => {
-                let style = InheritedDrawStyle {
-                    fill_color: Some(color),
-                    ..Default::default()
-                };
-                self.style = Some(style);
-            }
-        }
-        self
-    }
+//     pub fn set_fill_color(mut self, color: Option<Paint>) -> Self {
+//         match self.style {
+//             Some(ref mut style) => {
+//                 style.fill_color = Some(color);
+//             }
+//             None => {
+//                 let style = InheritedDrawStyle {
+//                     fill_color: Some(color),
+//                     ..Default::default()
+//                 };
+//                 self.style = Some(style);
+//             }
+//         }
+//         self
+//     }
 
-    pub fn build(self) -> Drawing<Unit> {
-        Drawing {
-            style: self.style.unwrap_or_default(),
-            command: None,
-            children: Vec::new(),
-        }
-    }
-}
+//     pub fn build(self) -> Drawing<Unit> {
+//         Drawing {
+//             style: self.style.unwrap_or_default(),
+//             command: None,
+//             children: Vec::new(),
+//         }
+//     }
+// }

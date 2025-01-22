@@ -165,3 +165,29 @@ impl<Unit: Scalar> PathCommand<Unit> {
         }
     }
 }
+
+impl<Unit> From<Vec<PathCommand<Unit>>> for Path<Unit> {
+    fn from(vec: Vec<PathCommand<Unit>>) -> Self {
+        Self(vec)
+    }
+}
+
+impl<Unit, const N: usize> From<[PathCommand<Unit>; N]> for Path<Unit> {
+    fn from(value: [PathCommand<Unit>; N]) -> Self {
+        Self(value.into_iter().collect())
+    }
+}
+
+impl<Unit: Scalar> IntoIterator for Path<Unit> {
+    type Item = PathCommand<Unit>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl<Unit: Scalar> FromIterator<PathCommand<Unit>> for Path<Unit> {
+    fn from_iter<T: IntoIterator<Item = PathCommand<Unit>>>(iter: T) -> Self {
+        Path(iter.into_iter().collect())
+    }
+}

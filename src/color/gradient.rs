@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use nalgebra::{Point2, Rotation2, Scalar};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -6,14 +7,14 @@ use serde::Serialize;
 #[cfg_attr(feature = "serde", derive(Serialize))]
 #[cfg_attr(feature = "serde", serde(tag = "transition"))]
 #[cfg_attr(feature = "serde", serde(rename_all = "snake_case"))]
-pub enum Gradient {
+pub enum Gradient<Unit: Scalar = f64> {
     Linear {
-        rot: Rotation,
-        colors: Vec<(SolidColor, f64)>,
+        rot: Rotation2<Unit>,
+        colors: Vec<(SolidColor, Unit)>,
     },
     Radial {
-        center: Point,
-        colors: Vec<(SolidColor, f64)>,
+        center: Point2<Unit>,
+        colors: Vec<(SolidColor, Unit)>,
     },
 }
 

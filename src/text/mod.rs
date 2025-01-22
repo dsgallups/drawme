@@ -32,7 +32,7 @@ pub mod font;
 /// the database properties.
 pub static FONT_DATABASE: LazyLock<Arc<Database>> = LazyLock::new(|| {
     let mut db = Database::new();
-    db.load_font_data(include_bytes!("../font/fonts/roboto/Roboto-Regular.ttf").to_vec());
+    //db.load_font_data(include_bytes!("../font/fonts/roboto/Roboto-Regular.ttf").to_vec());
 
     Arc::new(db)
 });

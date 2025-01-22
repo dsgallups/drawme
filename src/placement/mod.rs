@@ -32,7 +32,7 @@ impl<Unit: Scalar> PointExt<Unit> for Point2<Unit> {
     }
 }
 
-pub trait IntoPoint<Unit: Scalar> {
+pub trait IntoPoint<Unit: Scalar = f64> {
     fn into_point(self) -> Point2<Unit>;
 }
 
@@ -47,7 +47,7 @@ impl<Unit: Scalar> IntoPoint<Unit> for Point2<Unit> {
     }
 }
 
-pub trait IntoVector<Unit> {
+pub trait IntoVector<Unit = f64> {
     fn into_vector(self) -> Vector2<Unit>;
 }
 

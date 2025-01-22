@@ -25,10 +25,10 @@ where
 }
 
 #[derive(Default, Debug)]
-pub struct DrawStyle<'a> {
+pub struct DrawStyle<'a, Unit = f64> {
     pub fill: Option<Paint<'a>>,
     pub stroke: Option<Paint<'a>>,
-    pub stroke_width: Option<f64>,
+    pub stroke_width: Option<Unit>,
 }
 
 impl<'a> DrawStyle<'a> {
@@ -63,16 +63,40 @@ impl<'a> DrawStyle<'a> {
             stroke_width: style.stroke_width(),
         }
     }
+
+    pub fn from_style<S: AsDrawStyle>(style: S) -> Self {
+        Self {
+            fill: style.fill(),
+            stroke: style.stroke(),
+            stroke_width: style.stroke_width(),
+        }
+    }
 }
 
-pub trait AsDrawStyle {
+impl<'a, Unit: Copy> DrawStyle<'a, Unit> {
+    pub const fn clone_shallow(&self) -> DrawStyle<'_, Unit> {
+        DrawStyle {
+            stroke_width: self.stroke_width,
+            stroke: match self.stroke_color {
+                None => None,
+                Some(s) => Some(s.clone_shallow()),
+            },
+            fill: match self.fill_color {
+                None => None,
+                Some(s) => Some(s.clone_shallow()),
+            },
+        }
+    }
+}
+
+pub trait AsDrawStyle<Unit = f64> {
     fn fill(&self) -> Option<Paint<'_>> {
         None
     }
     fn stroke(&self) -> Option<Paint<'_>> {
         None
     }
-    fn stroke_width(&self) -> Option<f64> {
+    fn stroke_width(&self) -> Option<Unit> {
         None
     }
 }
