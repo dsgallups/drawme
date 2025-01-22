@@ -267,7 +267,7 @@ impl<Unit: DrawUnit + FromStr + Float> FromStr for Offset<Unit> {
         let s = s.trim();
         if s.strip_suffix('%').is_some() {
             return Ok(Offset::Percent(
-                Unit::from_str(s).map_err(|_| ())? / Unit::num(100.),
+                Unit::from_str(s).map_err(|_| ())? / Unit::ONE_HUNDO,
             ));
         }
         let pixel = s.parse().map_err(|_| ())?;
@@ -279,7 +279,7 @@ impl<Unit: DrawUnit + fmt::Display + Float> fmt::Display for Offset<Unit> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Offset::Percent(p) => {
-                write!(f, "{}%", *p * Unit::num(100.))
+                write!(f, "{}%", *p * Unit::ONE_HUNDO)
             }
             Offset::Scalar(p) => {
                 write!(f, "{}", p)

@@ -14,31 +14,33 @@ quick-xml v0.37.2 features:
 
 */
 
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Display};
 
 use crate::prelude::*;
 
 mod node;
+use nalgebra::{Point2, Rotation2, Scalar, Vector2};
 pub use node::*;
+use num_traits::Zero;
 
 #[cfg(feature = "xml")]
-pub type XmlSvg<'n> = Svg<XmlNode<'n>>;
+pub type XmlSvg<'n, Unit> = Svg<XmlNode<'n>, Unit>;
 
 #[derive(Debug)]
-pub struct Svg<N> {
+pub struct Svg<N, Unit: DrawUnit> {
     root: N,
-    stroke_gradients: Vec<Gradient>,
-    fill_gradients: Vec<Gradient>,
+    stroke_gradients: Vec<Gradient<Unit>>,
+    fill_gradients: Vec<Gradient<Unit>>,
 
-    bounding_box: Vector,
+    bounding_box: Vector2<Unit>,
 }
 
-impl<N: SvgNode> Svg<N> {
-    fn handle_new_element<S: AsDrawStyle>(
+impl<N: SvgNode, U: DrawUnit + Display> Svg<N, U> {
+    fn handle_new_element<S: AsDrawStyle<Unit = U>>(
         &mut self,
         style: S,
         mut el: N,
-        farthest_offset: Option<Vector>,
+        farthest_offset: Option<Vector2<U>>,
     ) {
         if let Some(max_offset) = farthest_offset {
             if max_offset > self.bounding_box {
@@ -88,9 +90,10 @@ impl<N: SvgNode> Svg<N> {
     }
 }
 
-fn handle_paint<N>(paint: Paint<'_>, gradients: &mut Vec<Gradient>, el: &mut N, key: &str)
+fn handle_paint<N, U>(paint: Paint<'_, U>, gradients: &mut Vec<Gradient<U>>, el: &mut N, key: &str)
 where
     N: SvgNode,
+    U: Scalar,
 {
     match paint {
         Paint::Gradient(gradient) => {
@@ -111,19 +114,24 @@ where
 }
 
 #[cfg(feature = "xml")]
-impl Default for XmlSvg<'_> {
+impl<U: DrawUnit> Default for XmlSvg<'_, U> {
     fn default() -> Self {
         Self {
             root: XmlNode::new("svg").with_attributes([("xmlns", "http://w3.org/2000/svg")]),
             stroke_gradients: vec![],
             fill_gradients: vec![],
-            bounding_box: Vector::zeros(),
+            bounding_box: Vector2::zeros(),
         }
     }
 }
 
-impl<N: SvgNode> Canvas for Svg<N> {
-    fn path<S: AsDrawStyle>(&mut self, style: S, path: &Path) {
+impl<N, U> Canvas for Svg<N, U>
+where
+    N: SvgNode,
+    U: DrawUnit + Display,
+{
+    type Unit = U;
+    fn path<S: AsDrawStyle<Unit = Self::Unit>>(&mut self, style: S, path: &Path<U>) {
         let mut path_el = N::path();
 
         let offset = path.bounding_box();
@@ -166,7 +174,7 @@ impl<N: SvgNode> Canvas for Svg<N> {
         self.handle_new_element(style, path_el, Some(offset.bottom_right_raw().coords));
     }
 
-    fn text<S: AsDrawStyle>(
+    fn text<S: AsDrawStyle<Unit = Self::Unit>>(
         &mut self,
         draw_style: S,
         text: &str,
@@ -179,7 +187,7 @@ impl<N: SvgNode> Canvas for Svg<N> {
         );
 
         let rotation = similarity.rotation.to_rotation_matrix();
-        let rotation_str = (rotation != Rotation::identity())
+        let rotation_str = (rotation != Rotation2::identity())
             .then(|| format!("rotate({})", rotation.angle().to_degrees()));
 
         let translation = similarity.translation;
@@ -203,14 +211,19 @@ impl<N: SvgNode> Canvas for Svg<N> {
     fn image(&mut self, _src: &ImageSource) {
         todo!()
     }
-    fn circle<S: AsDrawStyle>(&mut self, style: S, point: Point, radius: f64) {
+    fn circle<S: AsDrawStyle<Unit = Self::Unit>>(
+        &mut self,
+        style: S,
+        point: Point2<Self::Unit>,
+        radius: Self::Unit,
+    ) {
         let mut circle = N::circle();
         circle
             .push_attribute("cx", point.x)
             .push_attribute("cy", point.y)
             .push_attribute("r", radius);
 
-        let offset = Vector::new(point.x + radius, point.y + radius);
+        let offset = Vector2::new(point.x + radius, point.y + radius);
 
         self.handle_new_element(style, circle, Some(offset));
     }

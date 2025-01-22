@@ -25,7 +25,7 @@ impl<U: DrawUnit> Primitive for Circle<U> {
     fn draw_primitive<'c, C, S>(&'c self, canvas: &'c mut C) -> impl FnMut(S) + 'c
     where
         C: Canvas<Unit = Self::Unit>,
-        S: AsDrawStyle,
+        S: AsDrawStyle<Unit = Self::Unit>,
     {
         |style| {
             canvas.circle(style, self.position.clone(), self.radius.clone());

@@ -10,17 +10,21 @@ pub mod svg;
 pub mod xml;
 
 pub trait Canvas {
-    type Unit: Scalar;
+    type Unit: DrawUnit;
 
-    fn path<S: AsDrawStyle>(&mut self, style: S, path: &Path<Self::Unit>);
-    fn text<S: AsDrawStyle>(
+    fn path<S: AsDrawStyle<Unit = Self::Unit>>(&mut self, style: S, path: &Path<Self::Unit>);
+    fn text<S: AsDrawStyle<Unit = Self::Unit>>(
         &mut self,
         style: S,
         text: &str,
         font: &FontProps<'_>,
         isometry: Isometry,
     );
-    fn rectangle<S: AsDrawStyle>(&mut self, style: S, rectangle: &Rectangle<Self::Unit>) {
+    fn rectangle<S: AsDrawStyle<Unit = Self::Unit>>(
+        &mut self,
+        style: S,
+        rectangle: &Rectangle<Self::Unit>,
+    ) {
         let top_left = rectangle.top_left();
         let bottom_right = rectangle.bottom_left();
         let mut path = Path::with_capacity(5);
@@ -32,6 +36,11 @@ pub trait Canvas {
 
         self.path(style, &path);
     }
-    fn circle<S: AsDrawStyle>(&mut self, style: S, point: Point2<Self::Unit>, radius: Self::Unit);
+    fn circle<S: AsDrawStyle<Unit = Self::Unit>>(
+        &mut self,
+        style: S,
+        point: Point2<Self::Unit>,
+        radius: Self::Unit,
+    );
     fn image(&mut self, src: &ImageSource);
 }

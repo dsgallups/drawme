@@ -4,7 +4,7 @@ mod circle;
 pub use circle::*;
 
 mod path;
-use nalgebra::{Scalar, SimdComplexField, SimdRealField};
+use nalgebra::{RealField, Scalar, SimdComplexField, SimdRealField};
 use num_traits::{ConstOne, NumCast, ToPrimitive};
 pub use path::*;
 
@@ -36,7 +36,7 @@ pub trait Primitive: Sized {
 }
 
 pub trait DrawUnit:
-    Scalar + SimdComplexField + Copy + ConstOne + ConstTwo + PartialOrd + NumCast
+    Scalar + SimdComplexField + Copy + ConstOne + CommonConsts + PartialOrd + NumCast + RealField
 {
     fn rf<N: ToPrimitive>(num: N) -> Self::SimdRealField;
 
@@ -45,7 +45,7 @@ pub trait DrawUnit:
 
 impl<T> DrawUnit for T
 where
-    T: Scalar + SimdRealField + Copy + ConstOne + ConstTwo + PartialOrd + NumCast,
+    T: Scalar + SimdRealField + Copy + ConstOne + CommonConsts + PartialOrd + NumCast + RealField,
     T::SimdRealField: NumCast,
 {
     fn rf<N: ToPrimitive>(num: N) -> Self::SimdRealField {
@@ -56,14 +56,17 @@ where
     }
 }
 
-pub trait ConstTwo {
+pub trait CommonConsts {
     const TWO: Self;
+    const ONE_HUNDO: Self;
 }
 
-impl ConstTwo for f32 {
+impl CommonConsts for f32 {
     const TWO: Self = 2.;
+    const ONE_HUNDO: Self = 100.;
 }
 
-impl ConstTwo for f64 {
+impl CommonConsts for f64 {
     const TWO: Self = 2.;
+    const ONE_HUNDO: Self = 100.;
 }

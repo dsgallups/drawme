@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use nalgebra::{Point2, Scalar, Vector2};
+use nalgebra::{Point2, Scalar};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -68,8 +68,9 @@ impl<U: Scalar> Path<U> {
             .flat_map(|command| command.locations_mut())
             .collect()
     }
-    /*
-    pub fn bounding_box(&self) -> Rectangle {
+}
+impl<U: DrawUnit> Path<U> {
+    pub fn bounding_box(&self) -> Rectangle<U> {
         let mut max = Point2::origin();
 
         let mut commands = self.iter();
@@ -92,7 +93,6 @@ impl<U: Scalar> Path<U> {
 
         Rectangle::new(min, max)
     }
-    */
 }
 
 impl<U: DrawUnit> Primitive for Path<U> {

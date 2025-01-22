@@ -18,7 +18,7 @@ pub enum Gradient<Unit: Scalar = f64> {
     },
 }
 
-impl Gradient {
+impl<U: DrawUnit> Gradient<U> {
     /// Converts the gradient to an [`SvgNode`] type by appending its
     /// properties to the definitions of a [`SvgNode::linear_gradient`].
     #[cfg(feature = "svg")]
@@ -39,7 +39,7 @@ impl Gradient {
 
                 for (color, offset) in colors {
                     let mut stop = N::stop();
-                    stop.push_attribute("offset", format!("{:.2}%", offset * 100.0));
+                    stop.push_attribute("offset", format!("{:.2}%", *offset * U::ONE_HUNDO));
 
                     // do not use the SolidColor::as_svg_attributes function.
                     match color {
@@ -68,6 +68,9 @@ impl Gradient {
 }
 
 /// Maps [-1,1] to [0, 100]
-fn trns_n(f: f64) -> f64 {
-    ((f + 1.) / 2.) * 100.
+fn trns_n<N>(f: N) -> N
+where
+    N: DrawUnit,
+{
+    ((f + N::ONE) / N::TWO) * N::ONE_HUNDO
 }

@@ -1,5 +1,7 @@
 use std::fmt;
 
+use nalgebra::Point2;
+
 use crate::prelude::*;
 
 #[derive(Debug, Default)]
@@ -25,7 +27,8 @@ impl<T> Canvas for Dbg<T>
 where
     T: Canvas + ?Sized,
 {
-    fn path<S: AsDrawStyle>(&mut self, style: S, path: &Path) {
+    type Unit = T::Unit;
+    fn path<S: AsDrawStyle<Unit = Self::Unit>>(&mut self, style: S, path: &Path<Self::Unit>) {
         self.log(format!(
             "style: {:?}, path: {:?}",
             DrawStyle::from_style_ref(&style),
@@ -33,7 +36,13 @@ where
         ));
         self.inner.path(style, path);
     }
-    fn text<S: AsDrawStyle>(&mut self, style: S, text: &str, font: &FontProps<'_>, iso: Isometry) {
+    fn text<S: AsDrawStyle<Unit = Self::Unit>>(
+        &mut self,
+        style: S,
+        text: &str,
+        font: &FontProps<'_>,
+        iso: Isometry,
+    ) {
         self.log(format!(
             "style: {:?}, text: {:?}, {:?}, {:?}",
             DrawStyle::from_style_ref(&style),
@@ -47,7 +56,12 @@ where
         self.log(format!("image: {:?}", src));
         self.inner.image(src);
     }
-    fn circle<S: AsDrawStyle>(&mut self, style: S, point: Point, radius: f64) {
+    fn circle<S: AsDrawStyle<Unit = Self::Unit>>(
+        &mut self,
+        style: S,
+        point: Point2<Self::Unit>,
+        radius: Self::Unit,
+    ) {
         self.log(format!(
             "style: {:?}, circle: {:?}, {:?}",
             DrawStyle::from_style_ref(&style),
@@ -56,7 +70,11 @@ where
         ));
         self.inner.circle(style, point, radius);
     }
-    fn rectangle<S: AsDrawStyle>(&mut self, style: S, rectangle: &Rectangle) {
+    fn rectangle<S: AsDrawStyle<Unit = Self::Unit>>(
+        &mut self,
+        style: S,
+        rectangle: &Rectangle<Self::Unit>,
+    ) {
         self.log(format!(
             "style: {:?}, rectangle: {:?}",
             DrawStyle::from_style_ref(&style),
