@@ -33,6 +33,7 @@ pub mod image;
 pub mod placement;
 pub mod primitives;
 pub mod style;
+
 pub mod text;
 
 pub mod prelude {

@@ -11,11 +11,11 @@ pub struct Rgba {
     /// blue
     pub b: u8,
     /// alpha (opacity betwen 0. and 1.)
-    pub a: f64,
+    pub a: f32,
 }
 
 impl Rgba {
-    pub const fn new(r: u8, g: u8, b: u8, a: f64) -> Self {
+    pub const fn new(r: u8, g: u8, b: u8, a: f32) -> Self {
         Self { r, g, b, a }
     }
 
@@ -23,7 +23,7 @@ impl Rgba {
         format!("rgba({}, {}, {}, {})", self.r, self.g, self.b, self.a)
     }
 
-    pub const fn into_tuple(self) -> (u8, u8, u8, f64) {
+    pub const fn into_tuple(self) -> (u8, u8, u8, f32) {
         (self.r, self.g, self.b, self.a)
     }
 }

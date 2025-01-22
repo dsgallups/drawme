@@ -1,17 +1,19 @@
+use nalgebra::Scalar;
+
 use crate::prelude::*;
 
-pub struct Fill<'a>(Paint<'a>);
+pub struct Fill<'a, Unit: Scalar = f64>(Paint<'a, Unit>);
 
-impl<'a> Fill<'a> {
-    pub fn new(paint: impl Into<Paint<'a>>) -> Self {
+impl<'a, Unit: Scalar> Fill<'a, Unit> {
+    pub fn new(paint: impl Into<Paint<'a, Unit>>) -> Self {
         Self(paint.into())
     }
 
-    pub fn paint<'slf>(&'slf self) -> &'slf Paint<'a> {
+    pub fn paint<'slf>(&'slf self) -> &'slf Paint<'a, Unit> {
         &self.0
     }
 
-    pub fn into_paint(self) -> Paint<'a> {
+    pub fn into_paint(self) -> Paint<'a, Unit> {
         self.0
     }
 }

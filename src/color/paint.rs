@@ -2,27 +2,39 @@ use std::borrow::Cow;
 
 use crate::prelude::*;
 
+use nalgebra::Scalar;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[derive(Clone, PartialEq, Debug)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
-pub enum Paint<'a> {
+pub enum Paint<'a, Unit: Scalar = f64> {
     Solid(SolidColor),
-    Gradient(Cow<'a, Gradient>),
+    Gradient(Cow<'a, Gradient<Unit>>),
 }
 
 impl Paint<'_> {
     pub const fn solid(solid_color: SolidColor) -> Self {
         Self::Solid(solid_color)
     }
+}
 
+impl<Unit: Scalar> Paint<'_, Unit> {
     //clones solid color, weakly clones gradient, even if owned
-    pub const fn clone_shallow(&self) -> Paint<'_> {
+    pub const fn clone_shallow(&self) -> Paint<'_, Unit> {
         match self {
             Paint::Solid(s) => Paint::Solid(*s),
             Paint::Gradient(Cow::Borrowed(g)) => Paint::Gradient(Cow::Borrowed(g)),
             Paint::Gradient(Cow::Owned(g)) => Paint::Gradient(Cow::Borrowed(g)),
+        }
+    }
+
+    /// If this paint is a borrowed gradient, the gradient will be cloned.
+    pub fn into_owned(self) -> Paint<'static, Unit> {
+        match self {
+            Paint::Solid(s) => Paint::Solid(s),
+            Paint::Gradient(Cow::Borrowed(g)) => Paint::Gradient(Cow::Owned(g.clone())),
+            Paint::Gradient(Cow::Owned(g)) => Paint::Gradient(Cow::Owned(g)),
         }
     }
 }

@@ -1,17 +1,19 @@
+use nalgebra::Scalar;
+
 use crate::prelude::*;
 
-pub struct StrokeColor<'a>(Paint<'a>);
+pub struct StrokeColor<'a, Unit: Scalar = f64>(Paint<'a, Unit>);
 
-impl<'a> StrokeColor<'a> {
-    pub fn new(paint: Paint<'a>) -> Self {
+impl<'a, Unit: Scalar> StrokeColor<'a, Unit> {
+    pub fn new(paint: Paint<'a, Unit>) -> Self {
         Self(paint)
     }
 
-    pub fn paint(&self) -> &Paint {
+    pub fn paint(&self) -> &Paint<'_, Unit> {
         &self.0
     }
 
-    pub fn into_paint(self) -> Paint<'a> {
+    pub fn into_paint(self) -> Paint<'a, Unit> {
         self.0
     }
 }
